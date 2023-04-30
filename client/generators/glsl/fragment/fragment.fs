@@ -1,10 +1,14 @@
-varying highp vec2 vTextureCoord;
-varying highp vec3 vLighting;
+#version 300 es
+
+in highp vec2 vTextureCoord;
+in highp vec3 vLighting;
 
 uniform sampler2D uSampler;
 
-void main(void) {
-  highp vec4 texelColor = texture2D(uSampler, vTextureCoord);
+out vec4 out_color;
 
-  gl_FragColor = vec4(texelColor.rgb * vLighting, texelColor.a);
+void main(void) {
+  highp vec4 texelColor = texture(uSampler, vTextureCoord);
+
+  out_color = vec4(texelColor.rgb * vLighting, texelColor.a);
 }

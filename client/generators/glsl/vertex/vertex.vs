@@ -1,13 +1,15 @@
-attribute vec4 aVertexPosition;
-attribute vec3 aVertexNormal;
-attribute vec2 aTextureCoord;
+#version 300 es
+
+in vec4 aVertexPosition;
+in vec3 aVertexNormal;
+in vec2 aTextureCoord;
 
 uniform mat4 uNormalMatrix;
 uniform mat4 uModelViewMatrix;
 uniform mat4 uProjectionMatrix;
 
-varying highp vec2 vTextureCoord;
-varying highp vec3 vLighting;
+out highp vec2 vTextureCoord;
+out highp vec3 vLighting;
 
 void main(void) {
   gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
