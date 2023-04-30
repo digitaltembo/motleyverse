@@ -13,4 +13,5 @@ export type MotleyBuffers = {
   color: WebGLBuffer | null;
   indices: WebGLBuffer | null;
   textures: WebGLBuffer | null;
+  normals: WebGLBuffer | null;
 };

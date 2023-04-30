@@ -98,6 +98,8 @@ function Canvas() {
         vertexPosition: gl.getAttribLocation(shaderProgram, "aVertexPosition"),
 
         textureCoord: gl.getAttribLocation(shaderProgram, "aTextureCoord"),
+
+        vertexNormal: gl.getAttribLocation(shaderProgram, "aVertexNormal"),
       },
       canvas,
       gl,
@@ -110,6 +112,7 @@ function Canvas() {
           shaderProgram,
           "uModelViewMatrix"
         ),
+        normalMatrix: gl.getUniformLocation(shaderProgram, "uNormalMatrix"),
 
         uSampler: gl.getUniformLocation(shaderProgram, "uSampler"),
       },
@@ -185,7 +188,7 @@ function Canvas() {
     };
     const buffers = initBuffers(gl);
     // Load texture
-    const texture = loadTexture(gl, "textures/dirt.png");
+    const texture = loadTexture(gl, "textures/wood.png");
     if (texture === null) {
       return null;
     }

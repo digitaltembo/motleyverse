@@ -65,13 +65,19 @@ function drawScene(
     rotation * 0.3, // amount to rotate in radians
     [1, 0, 0]
   ); // axis to rotate around (X)
+  const normalMatrix = mat4.create();
+  mat4.invert(normalMatrix, modelViewMatrix);
+  mat4.transpose(normalMatrix, normalMatrix);
 
   // Tell WebGL how to pull out the positions from the position
   // buffer into the vertexPosition attribute.
   setPositionAttribute(gl, buffers, programInfo);
   setTextureAttribute(gl, buffers, programInfo);
+  setNormalAttribute(gl, buffers, programInfo);
+
   // Tell WebGL which indices to use to index the vertices
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
+
   // Tell WebGL to use our program when drawing
   gl.useProgram(programInfo.program);
 
@@ -86,6 +92,12 @@ function drawScene(
     false,
     modelViewMatrix
   );
+  gl.uniformMatrix4fv(
+    programInfo.uniformLocations.normalMatrix,
+    false,
+    normalMatrix
+  );
+
   // Tell WebGL we want to affect texture unit 0
   gl.activeTexture(gl.TEXTURE0);
 
@@ -149,6 +161,30 @@ function setTextureAttribute(
     offset
   );
   gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
+}
+
+// Tell WebGL how to pull out the normals from
+// the normal buffer into the vertexNormal attribute.
+function setNormalAttribute(
+  gl: GL,
+  buffers: MotleyBuffers,
+  programInfo: ProgramInfo
+) {
+  const numComponents = 3;
+  const type = gl.FLOAT;
+  const normalize = false;
+  const stride = 0;
+  const offset = 0;
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffers.normals);
+  gl.vertexAttribPointer(
+    programInfo.attribLocations.vertexNormal,
+    numComponents,
+    type,
+    normalize,
+    stride,
+    offset
+  );
+  gl.enableVertexAttribArray(programInfo.attribLocations.vertexNormal);
 }
 
 export default drawScene;
