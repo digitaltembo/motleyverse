@@ -6,6 +6,7 @@ import fragment from "../fragment/base";
 import { GL, ProgramInfo } from "../types";
 import initBuffers from "../buffers";
 import drawScene from "../scene";
+import { mat4 } from "gl-matrix";
 
 const CanvasComponent = styled("canvas")`
   width: 100%;
@@ -13,6 +14,10 @@ const CanvasComponent = styled("canvas")`
   image-rendering: crisp-edges;
 `;
 
+type Axis = [number, number, number];
+const X_AXIS: Axis = [1, 0, 0];
+const Y_AXIS: Axis = [0, 1, 0];
+const Z_AXIS: Axis = [0, 0, 1];
 //
 // creates a shader of the given type, uploads the source and
 // compiles it.
@@ -40,8 +45,24 @@ function loadShader(gl: WebGLRenderingContext, type: number, source: string) {
   return shader;
 }
 
+function defaultView() {
+  // Set the drawing position to the "identity" point, which is
+  // the center of the scene.
+  const modelViewMatrix = mat4.create();
+
+  // Now move the drawing position a bit to where we want to
+  // start drawing the square.
+  mat4.translate(
+    modelViewMatrix, // destination matrix
+    modelViewMatrix, // matrix to translate
+    [-0.0, 0.0, -6.0]
+  ); // amount to translate
+  return modelViewMatrix;
+}
+
 function Canvas() {
   const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null);
+  const viewMatrix = React.useRef(defaultView());
 
   const programInfo = React.useMemo(() => {
     if (canvas == null) {
@@ -188,7 +209,7 @@ function Canvas() {
     };
     const buffers = initBuffers(gl);
     // Load texture
-    const texture = loadTexture(gl, "textures/wood.png");
+    const texture = loadTexture(gl, "textures/dirt.png");
     if (texture === null) {
       return null;
     }
@@ -203,7 +224,7 @@ function Canvas() {
       deltaTime = now - then;
       then = now;
 
-      drawScene(programInfo, buffers, texture, squareRotation);
+      drawScene(programInfo, buffers, texture, viewMatrix.current);
       squareRotation += deltaTime;
 
       requestAnimationFrame(render);
@@ -213,6 +234,38 @@ function Canvas() {
     // drawScene(programInfo, buffers);
     return programInfo;
   }, [canvas]);
+
+  React.useEffect(() => {
+    const rotate = (amount: number, axis: Axis) =>
+      mat4.rotate(viewMatrix.current, viewMatrix.current, amount, axis);
+
+    const keyPress = (event: KeyboardEvent) => {
+      switch (event.key) {
+        case "w":
+          rotate(-Math.PI / 12, Z_AXIS);
+          break;
+        case "s":
+          rotate(Math.PI / 12, Z_AXIS);
+          break;
+        case "a":
+          rotate(-Math.PI / 12, Y_AXIS);
+          break;
+        case "d":
+          rotate(Math.PI / 12, Y_AXIS);
+          break;
+        case "q":
+          rotate(-Math.PI / 12, X_AXIS);
+          break;
+        case "e":
+          rotate(Math.PI / 12, X_AXIS);
+          break;
+      }
+      console.log(viewMatrix.current);
+    };
+
+    window.addEventListener("keydown", keyPress);
+    return () => window.removeEventListener("keydown", keyPress);
+  }, []);
 
   return <CanvasComponent ref={setCanvas} />;
 }

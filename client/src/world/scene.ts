@@ -6,7 +6,7 @@ function drawScene(
   programInfo: ProgramInfo,
   buffers: MotleyBuffers,
   texture: WebGLTexture,
-  rotation: number
+  modelViewMatrix: mat4
 ) {
   const { gl, canvas } = programInfo;
   gl.clearColor(0.0, 0.0, 0.0, 1.0); // Clear to black, fully opaque
@@ -35,36 +35,36 @@ function drawScene(
   // as the destination to receive the result.
   mat4.perspective(projectionMatrix, fieldOfView, aspect, zNear, zFar);
 
-  // Set the drawing position to the "identity" point, which is
-  // the center of the scene.
-  const modelViewMatrix = mat4.create();
+  // // Set the drawing position to the "identity" point, which is
+  // // the center of the scene.
+  // const modelViewMatrix = mat4.create();
 
-  // Now move the drawing position a bit to where we want to
-  // start drawing the square.
-  mat4.translate(
-    modelViewMatrix, // destination matrix
-    modelViewMatrix, // matrix to translate
-    [-0.0, 0.0, -6.0]
-  ); // amount to translate
+  // // Now move the drawing position a bit to where we want to
+  // // start drawing the square.
+  // mat4.translate(
+  //   modelViewMatrix, // destination matrix
+  //   modelViewMatrix, // matrix to translate
+  //   [-0.0, 0.0, -6.0]
+  // ); // amount to translate
 
-  mat4.rotate(
-    modelViewMatrix, // destination matrix
-    modelViewMatrix, // matrix to rotate
-    rotation, // amount to rotate in radians
-    [0, 0, 1]
-  ); // axis to rotate around (Z)
-  mat4.rotate(
-    modelViewMatrix, // destination matrix
-    modelViewMatrix, // matrix to rotate
-    rotation * 0.7, // amount to rotate in radians
-    [0, 1, 0]
-  ); // axis to rotate around (Y)
-  mat4.rotate(
-    modelViewMatrix, // destination matrix
-    modelViewMatrix, // matrix to rotate
-    rotation * 0.3, // amount to rotate in radians
-    [1, 0, 0]
-  ); // axis to rotate around (X)
+  // mat4.rotate(
+  //   modelViewMatrix, // destination matrix
+  //   modelViewMatrix, // matrix to rotate
+  //   rotation, // amount to rotate in radians
+  //   [0, 0, 1]
+  // ); // axis to rotate around (Z)
+  // mat4.rotate(
+  //   modelViewMatrix, // destination matrix
+  //   modelViewMatrix, // matrix to rotate
+  //   rotation * 0.7, // amount to rotate in radians
+  //   [0, 1, 0]
+  // ); // axis to rotate around (Y)
+  // mat4.rotate(
+  //   modelViewMatrix, // destination matrix
+  //   modelViewMatrix, // matrix to rotate
+  //   rotation * 0.3, // amount to rotate in radians
+  //   [1, 0, 0]
+  // ); // axis to rotate around (X)
   const normalMatrix = mat4.create();
   mat4.invert(normalMatrix, modelViewMatrix);
   mat4.transpose(normalMatrix, normalMatrix);
