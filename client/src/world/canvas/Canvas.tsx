@@ -39,7 +39,6 @@ function loadShader(gl: WebGLRenderingContext, type: number, source: string) {
   return shader;
 }
 
-console.log(vertex, fragment);
 function Canvas() {
   const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null);
 
@@ -94,6 +93,8 @@ function Canvas() {
       program: shaderProgram,
       attribLocations: {
         vertexPosition: gl.getAttribLocation(shaderProgram, "aVertexPosition"),
+
+        vertexColor: gl.getAttribLocation(shaderProgram, "aVertexColor"),
       },
       canvas,
       gl,
