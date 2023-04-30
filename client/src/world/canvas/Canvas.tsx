@@ -47,6 +47,8 @@ function Canvas() {
       return null;
     }
 
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
     // Initialize the GL context
     const gl = canvas.getContext("webgl");
 
@@ -112,8 +114,23 @@ function Canvas() {
 
     const buffers = initBuffers(gl);
 
+    let then = 0;
+    let squareRotation = 0.0;
+    let deltaTime = 0;
+    // Draw the scene repeatedly
+    const render = (now: number) => {
+      now *= 0.001; // convert to seconds
+      deltaTime = now - then;
+      then = now;
+
+      drawScene(programInfo, buffers, squareRotation);
+      squareRotation += deltaTime;
+
+      requestAnimationFrame(render);
+    };
+    requestAnimationFrame(render);
     // Draw the scene
-    drawScene(programInfo, buffers);
+    // drawScene(programInfo, buffers);
     return programInfo;
   }, [canvas]);
 
