@@ -1,8 +1,8 @@
 import React from "react";
 import styled from "styled-components";
 
-import vertex from "../vertex/base";
-import fragment from "../fragment/base";
+import vertex from "../shaders/vertex";
+import fragment from "../shaders/fragment";
 import { GL, ProgramInfo } from "../types";
 import initBuffers from "../buffers";
 import drawScene from "../scene";

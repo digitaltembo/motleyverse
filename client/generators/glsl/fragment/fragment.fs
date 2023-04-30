@@ -1,5 +1,3 @@
-export default `
-
 varying highp vec2 vTextureCoord;
 varying highp vec3 vLighting;
 
@@ -10,4 +8,3 @@ void main(void) {
 
   gl_FragColor = vec4(texelColor.rgb * vLighting, texelColor.a);
 }
-`;
