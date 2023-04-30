@@ -1,6 +1,7 @@
 import React from 'react';
 
 import { createGlobalStyle } from 'styled-components'
+import Canvas from './world/canvas/Canvas';
 
 const GlobalStyle = createGlobalStyle`
   body {  margin: 0;
@@ -9,18 +10,22 @@ const GlobalStyle = createGlobalStyle`
       sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    width: 100%;
+    height: 100%;
+  }
+  html, #root {
+    width: 100%;
+    height: 100%;
   }
 `;
 
   
 function App() {
   return (
-    <div className="App">
+    <>
       <GlobalStyle />
-      <header className="App-header">
-        Test
-      </header>
-    </div>
+      <Canvas />
+    </>
   );
 }
 
