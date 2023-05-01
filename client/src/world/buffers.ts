@@ -1,3 +1,9 @@
+import {
+  BLOCK_HEIGHT,
+  BLOCK_WIDTH,
+  Block,
+  TEXTURE_BLOCK_MAP,
+} from "../gen/textures/mapping";
 import { GL, MotleyBuffers } from "./types";
 
 function initBuffers(gl: GL): MotleyBuffers {
@@ -128,21 +134,28 @@ function initIndexBuffer(gl: GL) {
 function initTextureBuffer(gl: GL) {
   const textureCoordBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
+  const block: Block = "stonebricks";
 
-  const textureCoordinates = [
-    // Front
-    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
-    // Back
-    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
-    // Top
-    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
-    // Bottom
-    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
-    // Right
-    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
-    // Left
-    0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 0.0, 1.0,
-  ];
+  const textureCoordinates = TEXTURE_BLOCK_MAP[block].flatMap(
+    (texIndex, index) => {
+      console.log(
+        block,
+        texIndex % BLOCK_WIDTH,
+        Math.floor(texIndex / BLOCK_WIDTH)
+      );
+      const x = (texIndex % BLOCK_WIDTH) / BLOCK_WIDTH;
+      const dx = 1 / BLOCK_WIDTH;
+      const y = Math.floor(texIndex / BLOCK_WIDTH) / BLOCK_HEIGHT;
+      const dy = 1 / BLOCK_HEIGHT;
+      if (index === 0 || index === 2 || index === 5) {
+        // Facing me
+        return [x, y, x + dx, y, x + dx, y + dy, x, y + dy];
+      } else {
+        // backwards
+        return [x, y, x, y + dy, x + dx, y + dy, x + dx, y];
+      }
+    }
+  );
 
   gl.bufferData(
     gl.ARRAY_BUFFER,

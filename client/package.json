@@ -18,7 +18,7 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "prebuild": "python generators/glsl/run.py",
+    "prebuild": "python generators/shaders/run.py && python generators/textures/run.py",
     "start": "react-scripts start",
     "build": "npm run prebuild && react-scripts build",
     "test": "react-scripts test",

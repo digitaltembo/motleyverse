@@ -6,7 +6,8 @@ from PIL import Image
 BASE = Path(__file__).resolve().parent
 BLOCK_DIR = BASE / 'blocks'
 SIZE = 24
-OUT_DIR = BASE / '../../public/textures'
+PUBLIC_OUT_DIR = BASE / '../../public/textures'
+CODE_OUT_FILE = BASE / "../../src/gen/textures/mapping.ts"
 
 blocks = []
 
@@ -106,13 +107,27 @@ def mega_texture(name, textures):
         for y in range(0, height):
             out.paste(Image.open(
                 textures[x + y * width]), (x * SIZE, y * SIZE))
-    out.save(OUT_DIR / (name + '.png'))
+    out.save(PUBLIC_OUT_DIR / (name + '.png'))
+    return width, height
+
+
+def texture_mapping(blocks, block_textures, item_textures):
+    width, height = mega_texture("blocks", block_textures)
+
+    code = ""
+    code += f"export const BLOCK_WIDTH = {width};\n"
+    code += f"export const BLOCK_HEIGHT = {height};\n"
+
+    code += "export const TEXTURE_BLOCK_MAP = {\n"
+    for block in blocks:
+        code += f'  "{block.name}": [{block.front},{block.back},{block.top},{block.bottom},{block.right},{block.left}],\n'
+    code += "};\n"
+    code += "export type Block = keyof typeof TEXTURE_BLOCK_MAP;"
+
+    with open(CODE_OUT_FILE, 'w') as f:
+        f.write(code)
 
 
 blocks, block_textures, item_textures = find_blocks()
 
-mega_texture('blocks', block_textures)
-
-print(blocks)
-print('---------------')
-print(len(block_textures))
+texture_mapping(blocks, block_textures, item_textures)
