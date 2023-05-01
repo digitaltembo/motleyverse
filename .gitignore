@@ -1,5 +1,6 @@
 client/node_modules/*
 client/package-lock.json
-client/public/textures/source/*
+client/generators/textures/raw/*
 client/src/world/shaders/*
 client/build
+client/public/textures/*
