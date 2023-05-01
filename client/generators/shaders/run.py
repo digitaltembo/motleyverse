@@ -4,7 +4,7 @@ from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
 INCLUDE_LINE = r"^#include <(.+)>$"
-BASE_OUT = BASE / '../../src/world/shaders'
+BASE_OUT = BASE / '../../src/gen/shaders'
 SHADERS = [
     BASE / 'fragment/fragment.fs',
     BASE / 'vertex/vertex.vs'
@@ -26,7 +26,7 @@ def generateGlslCode(filepath):
 
 
 def wrapGlslCode(code):
-    return f"""// Generated with generators/glsl/run.py
+    return f"""// Generated with generators/shaders/run.py
 
 const code = `{code}`;
 export default code;"""

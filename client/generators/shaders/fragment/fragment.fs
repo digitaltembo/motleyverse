@@ -5,7 +5,7 @@ in highp vec3 vLighting;
 
 uniform sampler2D uSampler;
 
-out vec4 out_color;
+out highp vec4 out_color;
 
 void main(void) {
   highp vec4 texelColor = texture(uSampler, vTextureCoord);
