@@ -8,6 +8,8 @@ import initBuffers from "../buffers";
 import drawScene from "../scene";
 import { mat4 } from "gl-matrix";
 import { getProgramInfo } from "../../gen/shaders/shaderInterface";
+import initShaders from "./initShaders";
+import { loadBlockTextures } from "./loadTextures";
 
 const CanvasComponent = styled("canvas")`
   width: 100%;
@@ -19,33 +21,6 @@ type Axis = [number, number, number];
 const X_AXIS: Axis = [1, 0, 0];
 const Y_AXIS: Axis = [0, 1, 0];
 const Z_AXIS: Axis = [0, 0, 1];
-//
-// creates a shader of the given type, uploads the source and
-// compiles it.
-//
-function loadShader(gl: WebGLRenderingContext, type: number, source: string) {
-  const shader = gl.createShader(type);
-  if (shader === null) {
-    throw new Error("Failed to create shader?!?");
-  }
-  // Send the source to the shader object
-  gl.shaderSource(shader, source);
-
-  // Compile the shader program
-  gl.compileShader(shader);
-
-  // See if it compiled successfully
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    console.warn(
-      `An error occurred compiling the shaders: ${gl.getShaderInfoLog(shader)}`
-    );
-    gl.deleteShader(shader);
-    return null;
-  }
-
-  return shader;
-}
-
 function defaultView() {
   // Set the drawing position to the "identity" point, which is
   // the center of the scene.
@@ -68,116 +43,14 @@ function Canvas() {
   const viewMatrix = React.useRef(defaultView());
 
   const programInfo = React.useMemo(() => {
-    if (canvas == null) {
-      return null;
-    }
-
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    // Initialize the GL context
-    const gl = canvas.getContext("webgl2");
-
-    // Only continue if WebGL is available and working
-    if (gl === null) {
-      console.warn(
-        "Unable to initialize WebGL. Your browser or machine may not support it."
-      );
-      return null;
-    }
-
-    // Set clear color to black, fully opaque
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    // Clear the color buffer with specified clear color
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vertex);
-    const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fragment);
-
-    // Create the shader program
-
-    const shaderProgram = gl.createProgram();
-    if (
-      shaderProgram === null ||
-      vertexShader === null ||
-      fragmentShader === null
-    ) {
-      return;
-    }
-    gl.attachShader(shaderProgram, vertexShader);
-    gl.attachShader(shaderProgram, fragmentShader);
-    gl.linkProgram(shaderProgram);
-
-    // If creating the shader program failed, console.warn
-
-    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-      console.warn(
-        `Unable to initialize the shader program: ${gl.getProgramInfoLog(
-          shaderProgram
-        )}`
-      );
-      return null;
-    }
-    const programInfo = getProgramInfo(gl, shaderProgram, canvas);
+    const programInfo = initShaders(canvas);
     if (programInfo === null) {
       return;
     }
-    //
-    // Initialize a texture and load an image.
-    // When the image finished loading copy it into the texture.
-    //
-    const loadTexture = (gl: GL, url: string) => {
-      const texture = gl.createTexture();
-      gl.bindTexture(gl.TEXTURE_2D, texture);
 
-      // Because images have to be downloaded over the internet
-      // they might take a moment until they are ready.
-      // Until then put a single pixel in the texture so we can
-      // use it immediately. When the image has finished downloading
-      // we'll update the texture with the contents of the image.
-      const level = 0;
-      const internalFormat = gl.RGBA;
-      const width = 1;
-      const height = 1;
-      const border = 0;
-      const srcFormat = gl.RGBA;
-      const srcType = gl.UNSIGNED_BYTE;
-      const pixel = new Uint8Array([0, 0, 255, 255]); // opaque blue
-      gl.texImage2D(
-        gl.TEXTURE_2D,
-        level,
-        internalFormat,
-        width,
-        height,
-        border,
-        srcFormat,
-        srcType,
-        pixel
-      );
-
-      const image = new Image();
-      image.onload = () => {
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(
-          gl.TEXTURE_2D,
-          level,
-          internalFormat,
-          srcFormat,
-          srcType,
-          image
-        );
-
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-
-        gl.generateMipmap(gl.TEXTURE_2D);
-      };
-      image.src = url;
-
-      return texture;
-    };
-
-    const buffers = initBuffers(gl);
+    const buffers = initBuffers(programInfo.gl);
     // Load texture
-    const texture = loadTexture(gl, "textures/blocks.png");
+    const texture = loadBlockTextures(programInfo.gl);
     if (texture === null) {
       return null;
     }
