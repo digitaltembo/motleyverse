@@ -1,13 +1,9 @@
 import React from "react";
 import styled from "styled-components";
 
-import vertex from "../../gen/shaders/vertex";
-import fragment from "../../gen/shaders/fragment";
-import { GL } from "../types";
 import initBuffers from "../buffers";
 import drawScene from "../scene";
 import { mat4 } from "gl-matrix";
-import { getProgramInfo } from "../../gen/shaders/shaderInterface";
 import initShaders from "./initShaders";
 import { loadBlockTextures } from "./loadTextures";
 
@@ -18,8 +14,8 @@ const CanvasComponent = styled("canvas")`
 `;
 
 type Axis = [number, number, number];
-const X_AXIS: Axis = [1, 0, 0];
-const Y_AXIS: Axis = [0, 1, 0];
+const X_AXIS: Axis = [0.5, 0, 0];
+const Y_AXIS: Axis = [0, 0.5, 0];
 const Z_AXIS: Axis = [0, 0, 1];
 function defaultView() {
   // Set the drawing position to the "identity" point, which is
@@ -48,7 +44,57 @@ function Canvas() {
       return;
     }
 
-    const buffers = initBuffers(programInfo.gl);
+    const buffers = initBuffers(programInfo.gl, [
+      {
+        block: "grass",
+        x: -1.5,
+        y: -1.5,
+        z: -1.5,
+      },
+      {
+        block: "grass",
+        x: 0.5,
+        y: -1.5,
+        z: -1.5,
+      },
+      {
+        block: "grass",
+        x: -1.5,
+        y: 0.5,
+        z: -1.5,
+      },
+      {
+        block: "grass",
+        x: 0.5,
+        y: 0.5,
+        z: -1.5,
+      },
+      {
+        block: "grass",
+        x: -1.5,
+        y: -1.5,
+        z: 0.5,
+      },
+      {
+        block: "grass",
+        x: 0.5,
+        y: -1.5,
+        z: 0.5,
+      },
+      {
+        block: "grass",
+        x: -1.5,
+        y: 0.5,
+        z: 0.5,
+      },
+      {
+        block: "grass",
+        x: 0.5,
+        y: 0.5,
+        z: 0.5,
+      },
+    ]);
+    console.log(buffers);
     // Load texture
     const texture = loadBlockTextures(programInfo.gl);
     if (texture === null) {
@@ -76,13 +122,13 @@ function Canvas() {
       //   viewMatrix.current, // destination matrix
       //   viewMatrix.current, // matrix to rotate
       //   deltaTime * 0.7, // amount to rotate in radians
-      //   [0, 1, 0]
+      //   [0, 0.5, 0]
       // ); // axis to rotate around (Y)
       // mat4.rotate(
       //   viewMatrix.current, // destination matrix
       //   viewMatrix.current, // matrix to rotate
       //   deltaTime * 0.3, // amount to rotate in radians
-      //   [1, 0, 0]
+      //   [0.5, 0, 0]
       // ); // axis to rotate around (X)
       squareRotation += deltaTime;
 
