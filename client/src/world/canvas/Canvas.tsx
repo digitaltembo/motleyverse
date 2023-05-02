@@ -3,10 +3,11 @@ import styled from "styled-components";
 
 import vertex from "../../gen/shaders/vertex";
 import fragment from "../../gen/shaders/fragment";
-import { GL, ProgramInfo } from "../types";
+import { GL } from "../types";
 import initBuffers from "../buffers";
 import drawScene from "../scene";
 import { mat4 } from "gl-matrix";
+import { getProgramInfo } from "../../gen/shaders/shaderInterface";
 
 const CanvasComponent = styled("canvas")`
   width: 100%;
@@ -115,32 +116,10 @@ function Canvas() {
       );
       return null;
     }
-    const programInfo: ProgramInfo = {
-      program: shaderProgram,
-      attribLocations: {
-        vertexPosition: gl.getAttribLocation(shaderProgram, "aVertexPosition"),
-
-        textureCoord: gl.getAttribLocation(shaderProgram, "aTextureCoord"),
-
-        vertexNormal: gl.getAttribLocation(shaderProgram, "aVertexNormal"),
-      },
-      canvas,
-      gl,
-      uniformLocations: {
-        projectionMatrix: gl.getUniformLocation(
-          shaderProgram,
-          "uProjectionMatrix"
-        ),
-        modelViewMatrix: gl.getUniformLocation(
-          shaderProgram,
-          "uModelViewMatrix"
-        ),
-        normalMatrix: gl.getUniformLocation(shaderProgram, "uNormalMatrix"),
-
-        uSampler: gl.getUniformLocation(shaderProgram, "uSampler"),
-      },
-    };
-
+    const programInfo = getProgramInfo(gl, shaderProgram, canvas);
+    if (programInfo === null) {
+      return;
+    }
     //
     // Initialize a texture and load an image.
     // When the image finished loading copy it into the texture.

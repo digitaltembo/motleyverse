@@ -134,7 +134,7 @@ function initIndexBuffer(gl: GL) {
 function initTextureBuffer(gl: GL) {
   const textureCoordBuffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, textureCoordBuffer);
-  const block: Block = "stonebricks";
+  const block: Block = "wood";
 
   const textureCoordinates = TEXTURE_BLOCK_MAP[block].flatMap(
     (texIndex, index) => {

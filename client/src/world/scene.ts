@@ -1,6 +1,7 @@
 import { mat4 } from "gl-matrix";
 
-import { GL, MotleyBuffers, ProgramInfo } from "./types";
+import { GL, MotleyBuffers } from "./types";
+import { ProgramInfo } from "../gen/shaders/shaderInterface";
 
 function drawScene(
   programInfo: ProgramInfo,
@@ -47,24 +48,6 @@ function drawScene(
   //   [-0.0, 0.0, -6.0]
   // ); // amount to translate
 
-  // mat4.rotate(
-  //   modelViewMatrix, // destination matrix
-  //   modelViewMatrix, // matrix to rotate
-  //   rotation, // amount to rotate in radians
-  //   [0, 0, 1]
-  // ); // axis to rotate around (Z)
-  // mat4.rotate(
-  //   modelViewMatrix, // destination matrix
-  //   modelViewMatrix, // matrix to rotate
-  //   rotation * 0.7, // amount to rotate in radians
-  //   [0, 1, 0]
-  // ); // axis to rotate around (Y)
-  // mat4.rotate(
-  //   modelViewMatrix, // destination matrix
-  //   modelViewMatrix, // matrix to rotate
-  //   rotation * 0.3, // amount to rotate in radians
-  //   [1, 0, 0]
-  // ); // axis to rotate around (X)
   const normalMatrix = mat4.create();
   mat4.invert(normalMatrix, modelViewMatrix);
   mat4.transpose(normalMatrix, normalMatrix);
@@ -83,20 +66,16 @@ function drawScene(
 
   // Set the shader uniforms
   gl.uniformMatrix4fv(
-    programInfo.uniformLocations.projectionMatrix,
+    programInfo.uniLocs.projectionMatrix,
     false,
     projectionMatrix
   );
   gl.uniformMatrix4fv(
-    programInfo.uniformLocations.modelViewMatrix,
+    programInfo.uniLocs.modelViewMatrix,
     false,
     modelViewMatrix
   );
-  gl.uniformMatrix4fv(
-    programInfo.uniformLocations.normalMatrix,
-    false,
-    normalMatrix
-  );
+  gl.uniformMatrix4fv(programInfo.uniLocs.normalMatrix, false, normalMatrix);
 
   // Tell WebGL we want to affect texture unit 0
   gl.activeTexture(gl.TEXTURE0);
@@ -105,7 +84,7 @@ function drawScene(
   gl.bindTexture(gl.TEXTURE_2D, texture);
 
   // Tell the shader we bound the texture to texture unit 0
-  gl.uniform1i(programInfo.uniformLocations.uSampler, 0);
+  gl.uniform1i(programInfo.uniLocs.sampler, 0);
 
   {
     const vertexCount = 36;
@@ -130,14 +109,14 @@ function setPositionAttribute(
   const offset = 0; // how many bytes inside the buffer to start from
   gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
   gl.vertexAttribPointer(
-    programInfo.attribLocations.vertexPosition,
+    programInfo.attrLocs.vertexPosition,
     numComponents,
     type,
     normalize,
     stride,
     offset
   );
-  gl.enableVertexAttribArray(programInfo.attribLocations.vertexPosition);
+  gl.enableVertexAttribArray(programInfo.attrLocs.vertexPosition);
 }
 
 // tell webgl how to pull out the texture coordinates from buffer
@@ -153,14 +132,14 @@ function setTextureAttribute(
   const offset = 0; // how many bytes inside the buffer to start from
   gl.bindBuffer(gl.ARRAY_BUFFER, buffers.textures);
   gl.vertexAttribPointer(
-    programInfo.attribLocations.textureCoord,
+    programInfo.attrLocs.textureCoord,
     num,
     type,
     normalize,
     stride,
     offset
   );
-  gl.enableVertexAttribArray(programInfo.attribLocations.textureCoord);
+  gl.enableVertexAttribArray(programInfo.attrLocs.textureCoord);
 }
 
 // Tell WebGL how to pull out the normals from
@@ -177,14 +156,14 @@ function setNormalAttribute(
   const offset = 0;
   gl.bindBuffer(gl.ARRAY_BUFFER, buffers.normals);
   gl.vertexAttribPointer(
-    programInfo.attribLocations.vertexNormal,
+    programInfo.attrLocs.vertexNormal,
     numComponents,
     type,
     normalize,
     stride,
     offset
   );
-  gl.enableVertexAttribArray(programInfo.attribLocations.vertexNormal);
+  gl.enableVertexAttribArray(programInfo.attrLocs.vertexNormal);
 }
 
 export default drawScene;
