@@ -3,7 +3,7 @@ import re
 from pathlib import Path
 
 BASE = Path(__file__).resolve().parent
-INCLUDE_LINE = r"^#include <(.+)>$"
+INCLUDE_LINE = r"^#include \"(.+)\"$"
 BASE_OUT = BASE / '../../src/gen/shaders'
 SHADERS = [
     BASE / 'fragment/fragment.fs',
@@ -11,7 +11,7 @@ SHADERS = [
 ]
 
 
-def generateGlslCode(filepath):
+def generateGlslCode(filepath, skip_comments=False):
     # won't protext against infinite loops and circular dependencies
     # so don't do those
     code = ""
@@ -19,8 +19,9 @@ def generateGlslCode(filepath):
         for line in f.readlines():
             match = re.match(INCLUDE_LINE, line)
             if match:
-                code += generateGlslCode(match[1])
-            else:
+                code += generateGlslCode(Path(filepath).parent /
+                                         match[1], True)
+            elif not line.startswith('#') or not skip_comments:
                 code += line
     return code
 
