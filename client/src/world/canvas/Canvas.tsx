@@ -6,12 +6,26 @@ import drawScene from "../scene";
 import { mat4 } from "gl-matrix";
 import initShaders from "./initShaders";
 import { loadBlockTextures } from "./loadTextures";
+import { Block, TEXTURE_BLOCK_MAP } from "../../gen/textures/mapping";
 
 const CanvasComponent = styled("canvas")`
   width: 100%;
   height: 100%;
   image-rendering: crisp-edges;
 `;
+
+const dim = 14;
+const cubes = Array.from({ length: dim }).flatMap((_, x) =>
+  Array.from({ length: dim }).flatMap((_, y) =>
+    Array.from({ length: dim }).map((_, z) => {
+      const f = (v: number) => v * 2 - dim / 2 + 0.5;
+      const blocks = Object.keys(TEXTURE_BLOCK_MAP) as Block[];
+
+      const block = blocks[Math.floor(Math.random() * blocks.length)];
+      return { block, x: f(x), y: f(y), z: f(z) } as const;
+    })
+  )
+);
 
 type Axis = [number, number, number];
 const X_AXIS: Axis = [0.5, 0, 0];
@@ -29,8 +43,8 @@ function defaultView() {
     modelViewMatrix, // matrix to translate
     [-0.0, 0.0, -6.0]
   ); // amount to translate
-  mat4.rotate(modelViewMatrix, modelViewMatrix, Math.PI / 6, X_AXIS);
-  mat4.rotate(modelViewMatrix, modelViewMatrix, Math.PI / 4, Y_AXIS);
+  // mat4.rotate(modelViewMatrix, modelViewMatrix, Math.PI / 6, X_AXIS);
+  // mat4.rotate(modelViewMatrix, modelViewMatrix, Math.PI / 4, Y_AXIS);
   return modelViewMatrix;
 }
 
@@ -44,56 +58,7 @@ function Canvas() {
       return;
     }
 
-    const buffers = initBuffers(programInfo.gl, [
-      {
-        block: "grass",
-        x: -1.5,
-        y: -1.5,
-        z: -1.5,
-      },
-      {
-        block: "grass",
-        x: 0.5,
-        y: -1.5,
-        z: -1.5,
-      },
-      {
-        block: "grass",
-        x: -1.5,
-        y: 0.5,
-        z: -1.5,
-      },
-      {
-        block: "grass",
-        x: 0.5,
-        y: 0.5,
-        z: -1.5,
-      },
-      {
-        block: "grass",
-        x: -1.5,
-        y: -1.5,
-        z: 0.5,
-      },
-      {
-        block: "grass",
-        x: 0.5,
-        y: -1.5,
-        z: 0.5,
-      },
-      {
-        block: "grass",
-        x: -1.5,
-        y: 0.5,
-        z: 0.5,
-      },
-      {
-        block: "grass",
-        x: 0.5,
-        y: 0.5,
-        z: 0.5,
-      },
-    ]);
+    const buffers = initBuffers(programInfo.gl, cubes);
     console.log(buffers);
     // Load texture
     const texture = loadBlockTextures(programInfo.gl);
@@ -142,27 +107,31 @@ function Canvas() {
 
   React.useEffect(() => {
     const rotate = (amount: number, axis: Axis) =>
-      mat4.rotate(viewMatrix.current, viewMatrix.current, amount, axis);
+      mat4.translate(
+        viewMatrix.current,
+        viewMatrix.current,
+        axis.map((v) => v * amount) as Axis
+      );
 
     const keyPress = (event: KeyboardEvent) => {
       switch (event.key) {
         case "w":
-          rotate(-Math.PI / 12, Z_AXIS);
-          break;
-        case "s":
           rotate(Math.PI / 12, Z_AXIS);
           break;
+        case "s":
+          rotate(-Math.PI / 12, Z_AXIS);
+          break;
         case "a":
-          rotate(-Math.PI / 12, Y_AXIS);
+          rotate(Math.PI / 12, X_AXIS);
           break;
         case "d":
-          rotate(Math.PI / 12, Y_AXIS);
-          break;
-        case "q":
           rotate(-Math.PI / 12, X_AXIS);
           break;
+        case "q":
+          rotate(-Math.PI / 12, Y_AXIS);
+          break;
         case "e":
-          rotate(Math.PI / 12, X_AXIS);
+          rotate(Math.PI / 12, Y_AXIS);
           break;
       }
     };
@@ -170,6 +139,47 @@ function Canvas() {
     window.addEventListener("keydown", keyPress);
     return () => window.removeEventListener("keydown", keyPress);
   }, []);
+
+  React.useEffect(() => {
+    if (canvas) {
+      const moveListener = (event: MouseEvent) => {
+        mat4.rotate(
+          viewMatrix.current, // destination matrix
+          viewMatrix.current, // matrix to rotate
+          event.movementX * 0.01, // amount to rotate in radians
+          Y_AXIS
+        ); // axis to rotate around (X)
+
+        mat4.rotate(
+          viewMatrix.current, // destination matrix
+          viewMatrix.current, // matrix to rotate
+          event.movementY * 0.01, // amount to rotate in radians
+          X_AXIS
+        ); // axis to rotate around (X)
+      };
+
+      const clickListener = async () => {
+        await canvas.requestPointerLock();
+        canvas.addEventListener("mousemove", moveListener);
+        document.addEventListener(
+          "pointerlockchange",
+          (event) => {
+            if (document.pointerLockElement !== canvas) {
+              canvas.removeEventListener("mousemove", moveListener);
+            }
+          },
+          false
+        );
+      };
+
+      canvas.addEventListener("click", clickListener);
+      return () => {
+        canvas.removeEventListener("click", clickListener);
+        canvas.removeEventListener("mousemove", moveListener);
+      };
+    }
+    return () => {};
+  }, [canvas]);
 
   return <CanvasComponent ref={setCanvas} />;
 }
