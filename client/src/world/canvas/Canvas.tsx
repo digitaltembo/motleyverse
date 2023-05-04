@@ -27,30 +27,42 @@ const cubes = Array.from({ length: dim }).flatMap((_, x) =>
   )
 );
 
-type Axis = [number, number, number];
-const X_AXIS: Axis = [0.5, 0, 0];
-const Y_AXIS: Axis = [0, 0.5, 0];
-const Z_AXIS: Axis = [0, 0, 1];
-function defaultView() {
-  // Set the drawing position to the "identity" point, which is
-  // the center of the scene.
-  const modelViewMatrix = mat4.create();
-
-  // Now move the drawing position a bit to where we want to
-  // start drawing the square.
-  mat4.translate(
-    modelViewMatrix, // destination matrix
-    modelViewMatrix, // matrix to translate
-    [-0.0, 0.0, -6.0]
-  ); // amount to translate
-  // mat4.rotate(modelViewMatrix, modelViewMatrix, Math.PI / 6, X_AXIS);
-  // mat4.rotate(modelViewMatrix, modelViewMatrix, Math.PI / 4, Y_AXIS);
-  return modelViewMatrix;
+const PITCH_LIMITS = [-Math.PI / 2, Math.PI / 2] as const;
+function constrain(v: number, [min, max]: Readonly<[number, number]>) {
+  if (v < min) return min;
+  if (v > max) return max;
+  return v;
 }
 
+type Axis = [number, number, number];
+const X_AXIS: Axis = [1, 0, 0];
+const Y_AXIS: Axis = [0, 1, 0];
+const Z_AXIS: Axis = [0, 0, 1];
+
+const DELTA = 0.1;
+
+type Camera = {
+  position: [number, number, number];
+  perspective: [number, number];
+};
+
+function defaultCamera(): Camera {
+  return {
+    position: [0, 2, 0],
+    perspective: [0, 0],
+  };
+}
+
+function viewFromCamera(camera: Camera) {
+  const view = mat4.create();
+  mat4.rotateX(view, view, camera.perspective[1]);
+  mat4.rotateY(view, view, camera.perspective[0]);
+  mat4.translate(view, view, camera.position);
+  return view;
+}
 function Canvas() {
   const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null);
-  const viewMatrix = React.useRef(defaultView());
+  const camera = React.useRef(defaultCamera());
 
   const programInfo = React.useMemo(() => {
     const programInfo = initShaders(canvas);
@@ -76,25 +88,8 @@ function Canvas() {
       deltaTime = 0.001;
       then = now;
 
-      drawScene(programInfo, buffers, texture, viewMatrix.current);
-      // mat4.rotate(
-      //   viewMatrix.current, // destination matrix
-      //   viewMatrix.current, // matrix to rotate
-      //   deltaTime, // amount to rotate in radians
-      //   [0, 0, 1]
-      // ); // axis to rotate around (Z)
-      // mat4.rotate(
-      //   viewMatrix.current, // destination matrix
-      //   viewMatrix.current, // matrix to rotate
-      //   deltaTime * 0.7, // amount to rotate in radians
-      //   [0, 0.5, 0]
-      // ); // axis to rotate around (Y)
-      // mat4.rotate(
-      //   viewMatrix.current, // destination matrix
-      //   viewMatrix.current, // matrix to rotate
-      //   deltaTime * 0.3, // amount to rotate in radians
-      //   [0.5, 0, 0]
-      // ); // axis to rotate around (X)
+      drawScene(programInfo, buffers, texture, viewFromCamera(camera.current));
+
       squareRotation += deltaTime;
 
       requestAnimationFrame(render);
@@ -106,32 +101,40 @@ function Canvas() {
   }, [canvas]);
 
   React.useEffect(() => {
-    const rotate = (amount: number, axis: Axis) =>
-      mat4.translate(
-        viewMatrix.current,
-        viewMatrix.current,
-        axis.map((v) => v * amount) as Axis
-      );
+    const move = (amount: number, [x1, y1, z1]: Axis) => {
+      const [x, y, z] = camera.current.position;
+      camera.current.position = [
+        x +
+          amount *
+            (x1 * Math.cos(camera.current.perspective[0]) -
+              z1 * Math.sin(camera.current.perspective[0])),
+        y + amount * y1,
+        z +
+          amount *
+            (x1 * Math.sin(camera.current.perspective[0]) +
+              z1 * Math.cos(camera.current.perspective[0])),
+      ];
+    };
 
     const keyPress = (event: KeyboardEvent) => {
       switch (event.key) {
         case "w":
-          rotate(Math.PI / 12, Z_AXIS);
+          move(DELTA, Z_AXIS);
           break;
         case "s":
-          rotate(-Math.PI / 12, Z_AXIS);
+          move(-DELTA, Z_AXIS);
           break;
         case "a":
-          rotate(Math.PI / 12, X_AXIS);
+          move(DELTA, X_AXIS);
           break;
         case "d":
-          rotate(-Math.PI / 12, X_AXIS);
+          move(-DELTA, X_AXIS);
           break;
         case "q":
-          rotate(-Math.PI / 12, Y_AXIS);
+          move(-DELTA, Y_AXIS);
           break;
         case "e":
-          rotate(Math.PI / 12, Y_AXIS);
+          move(DELTA, Y_AXIS);
           break;
       }
     };
@@ -143,19 +146,11 @@ function Canvas() {
   React.useEffect(() => {
     if (canvas) {
       const moveListener = (event: MouseEvent) => {
-        mat4.rotate(
-          viewMatrix.current, // destination matrix
-          viewMatrix.current, // matrix to rotate
-          event.movementX * 0.01, // amount to rotate in radians
-          Y_AXIS
-        ); // axis to rotate around (X)
-
-        mat4.rotate(
-          viewMatrix.current, // destination matrix
-          viewMatrix.current, // matrix to rotate
-          event.movementY * 0.01, // amount to rotate in radians
-          X_AXIS
-        ); // axis to rotate around (X)
+        camera.current.perspective[0] += event.movementX * 0.01;
+        camera.current.perspective[1] = constrain(
+          camera.current.perspective[1] + event.movementY * 0.01,
+          PITCH_LIMITS
+        );
       };
 
       const clickListener = async () => {
