@@ -11,7 +11,7 @@ export const WIDTH = 24;
 export const DEPTH = 24;
 export const HEIGHT = 8;
 export const CHUNK_SIZE = WIDTH * HEIGHT * DEPTH;
-export const CROSS_SECTION_SIZE = WIDTH * DEPTH;
+export const CROSS_SECTION_SIZE = WIDTH * HEIGHT;
 
 // Block data is
 // 8 bits block type
@@ -67,7 +67,8 @@ function calculateIsExposed(chunk: Chunk, [x, y, z]: Position) {
   }
   return false;
 }
-
+// Iterate over blocks in chunk
+// left to right, bottom to top, back to front
 function chunkIter(fn: (position: Position, index: number) => void) {
   let index = 0;
   for (let z = 0; z < DEPTH; z++) {
@@ -82,10 +83,24 @@ function chunkIter(fn: (position: Position, index: number) => void) {
 
 export function generateChunk() {
   const chunk = new Uint16Array(CHUNK_SIZE);
-  chunkIter(([_1, y, _2], index) => {
-    chunk[index] = Math.floor(
-      Math.random() * Object.keys(TEXTURE_BLOCK_MAP).length
-    );
+  chunkIter(([x, y, z], index) => {
+    // if (x === 0) {
+    //   chunk[index] = 0;
+    // } else if (y === 0) {
+    //   chunk[index] = 1;
+    // } else if (z === 0) {
+    //   chunk[index] = 2;
+    // } else {
+    //   chunk[index] = AIR;
+    // }
+    if (Math.random() > 0.5) {
+      // if (y > HEIGHT - Math.random() * 2 - 2) {
+      chunk[index] = AIR;
+    } else {
+      chunk[index] = Math.floor(
+        Math.random() * Object.keys(TEXTURE_BLOCK_MAP).length
+      );
+    }
     // console.log(chunk[index]);
   });
   chunkIter((position, index) => {

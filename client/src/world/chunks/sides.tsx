@@ -10,7 +10,10 @@ import {
 
 export const SIDE_MAP = {
   FRONT: {
-    indexOffset: (index: ChunkIndex) => index + CROSS_SECTION_SIZE,
+    indexOffset: (index: ChunkIndex) => {
+      // console.log("checking z", index, index + CROSS_SECTION_SIZE);
+      return index + CROSS_SECTION_SIZE;
+    },
     inChunk: ([_1, _2, z]: Position) => z < DEPTH - 1,
     vertices: [
       [0, 0, 1],
