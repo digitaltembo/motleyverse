@@ -7,6 +7,7 @@ import { mat4 } from "gl-matrix";
 import initShaders from "./initShaders";
 import { loadBlockTextures } from "./loadTextures";
 import { Block, TEXTURE_BLOCK_MAP } from "../../gen/textures/mapping";
+import { chunkBuffers, generateChunk } from "../chunks/chunk";
 
 const CanvasComponent = styled("canvas")`
   width: 100%;
@@ -14,11 +15,11 @@ const CanvasComponent = styled("canvas")`
   image-rendering: crisp-edges;
 `;
 
-const dim = 14;
+const dim = 1;
 const cubes = Array.from({ length: dim }).flatMap((_, x) =>
   Array.from({ length: dim }).flatMap((_, y) =>
     Array.from({ length: dim }).map((_, z) => {
-      const f = (v: number) => v * 2 - dim / 2 + 0.5;
+      const f = (v: number) => v - dim / 2 + 0.5;
       const blocks = Object.keys(TEXTURE_BLOCK_MAP) as Block[];
 
       const block = blocks[Math.floor(Math.random() * blocks.length)];
@@ -48,7 +49,7 @@ type Camera = {
 
 function defaultCamera(): Camera {
   return {
-    position: [0, 2, 0],
+    position: [-8.257517400730253, -9.499999999999984, -8.132267220205637],
     perspective: [0, 0],
   };
 }
@@ -70,7 +71,8 @@ function Canvas() {
       return;
     }
 
-    const buffers = initBuffers(programInfo.gl, cubes);
+    const buffers = chunkBuffers(programInfo.gl, generateChunk());
+    // const buffers = initBuffers(programInfo.gl, cubes);
     console.log(buffers);
     // Load texture
     const texture = loadBlockTextures(programInfo.gl);
@@ -136,6 +138,8 @@ function Canvas() {
         case "e":
           move(DELTA, Y_AXIS);
           break;
+        case "p":
+          console.log(camera.current);
       }
     };
 

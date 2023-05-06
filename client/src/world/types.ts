@@ -2,9 +2,22 @@
 export type GL = WebGLRenderingContext;
 
 export type MotleyBuffers = {
-  position: WebGLBuffer | null;
+  positions: WebGLBuffer | null;
   indices: WebGLBuffer | null;
   textures: WebGLBuffer | null;
   normals: WebGLBuffer | null;
   vertexCount: number;
+};
+
+export type Chunk = Uint16Array;
+export type BitwiseBlockData = number;
+
+export type Position = [number, number, number];
+export type ChunkIndex = number;
+export type SideInfo = {
+  indexOffset: (index: ChunkIndex) => ChunkIndex;
+  inChunk: (position: Position) => boolean;
+  vertices: [Position, Position, Position, Position];
+  norm: Position;
+  textureIndex: number;
 };

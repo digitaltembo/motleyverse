@@ -94,7 +94,7 @@ const CUBE_INDICES = [
 
 const CUBE_INDEX_COUNT = 24;
 
-function map3<A, B>(
+export function map3<A, B>(
   arr: Array<A>,
   fn: (iter: [A, A, A]) => [B, B, B]
 ): Array<B> {
@@ -108,7 +108,7 @@ function map3<A, B>(
 function initBuffers(gl: GL, cubes: Cube[]): MotleyBuffers {
   const [indices, vertexCount] = initIndexBuffer(gl, cubes.length);
   return {
-    position: initPositionBuffer(gl, cubes),
+    positions: initPositionBuffer(gl, cubes),
     textures: initTextureBuffer(gl, cubes),
     normals: initNormalBuffer(gl, cubes.length),
     indices,
@@ -128,6 +128,7 @@ function initPositionBuffer(gl: GL, cubes: Cube[]) {
   const positions = cubes.flatMap((cube) =>
     map3(CUBE_POSITIONS, ([x, y, z]) => [x + cube.x, y + cube.y, z + cube.z])
   );
+  console.log({ positions });
 
   // console.log(positions);
 
@@ -152,7 +153,7 @@ function initIndexBuffer(gl: GL, cubeCount: number) {
   );
 
   // Now send the element array to GL
-
+  console.log({ indices });
   gl.bufferData(
     gl.ELEMENT_ARRAY_BUFFER,
     new Uint16Array(indices),
@@ -181,6 +182,7 @@ function initTextureBuffer(gl: GL, cubes: Cube[]) {
       }
     })
   );
+  console.log({ textureCoordinates });
 
   gl.bufferData(
     gl.ARRAY_BUFFER,

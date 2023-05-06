@@ -107,7 +107,7 @@ function setPositionAttribute(
   const stride = 0; // how many bytes to get from one set of values to the next
   // 0 = use type and numComponents above
   const offset = 0; // how many bytes inside the buffer to start from
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffers.positions);
   gl.vertexAttribPointer(
     programInfo.attrLocs.vertexPosition,
     numComponents,
