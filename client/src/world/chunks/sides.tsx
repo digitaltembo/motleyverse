@@ -29,9 +29,9 @@ export const SIDE_MAP = {
     inChunk: ([_1, _2, z]: Position) => z > 0,
     vertices: [
       [0, 0, 0],
-      [0, 1, 0],
-      [1, 1, 0],
       [1, 0, 0],
+      [1, 1, 0],
+      [0, 1, 0],
     ],
     norm: [0, 0, -1],
     textureIndex: 1,
@@ -65,9 +65,9 @@ export const SIDE_MAP = {
     inChunk: ([x, _1, _2]: Position) => x < WIDTH - 1,
     vertices: [
       [1, 0, 0],
-      [1, 1, 0],
-      [1, 1, 1],
       [1, 0, 1],
+      [1, 1, 1],
+      [1, 1, 0],
     ],
     norm: [1, 0, 0],
     textureIndex: 4,

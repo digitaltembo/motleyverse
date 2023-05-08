@@ -40,7 +40,7 @@ const X_AXIS: Axis = [1, 0, 0];
 const Y_AXIS: Axis = [0, 1, 0];
 const Z_AXIS: Axis = [0, 0, 1];
 
-const DELTA = 0.1;
+const DELTA = 1;
 
 type Camera = {
   position: [number, number, number];

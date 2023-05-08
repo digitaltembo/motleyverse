@@ -5,11 +5,12 @@ import {
   TEXTURE_BLOCK_MAP,
 } from "../../gen/textures/mapping";
 import { BitwiseBlockData, Chunk, GL, MotleyBuffers, Position } from "../types";
+import { perlin2 } from "./noise";
 import { SIDES, sideExposed } from "./sides";
 
-export const WIDTH = 24;
-export const DEPTH = 24;
-export const HEIGHT = 8;
+export const WIDTH = 50;
+export const DEPTH = 50;
+export const HEIGHT = 20;
 export const CHUNK_SIZE = WIDTH * HEIGHT * DEPTH;
 export const CROSS_SECTION_SIZE = WIDTH * HEIGHT;
 
@@ -38,6 +39,10 @@ export function createChunk() {
 export const BLOCK_TYPE_FILTER = 0xff;
 export const EXPOSED_FILTER = 0x1 << 8;
 export const AIR = 0xff;
+
+function blockFromTexture(block: Block) {
+  return Object.keys(TEXTURE_BLOCK_MAP).indexOf(block);
+}
 
 function blockType(block: BitwiseBlockData) {
   return Object.keys(TEXTURE_BLOCK_MAP)[block & BLOCK_TYPE_FILTER] as Block;
@@ -83,26 +88,41 @@ function chunkIter(fn: (position: Position, index: number) => void) {
 
 export function generateChunk() {
   const chunk = new Uint16Array(CHUNK_SIZE);
-  chunkIter(([x, y, z], index) => {
-    // if (x === 0) {
-    //   chunk[index] = 0;
-    // } else if (y === 0) {
-    //   chunk[index] = 1;
-    // } else if (z === 0) {
-    //   chunk[index] = 2;
-    // } else {
-    //   chunk[index] = AIR;
-    // }
-    if (Math.random() > 0.5) {
-      // if (y > HEIGHT - Math.random() * 2 - 2) {
-      chunk[index] = AIR;
-    } else {
-      chunk[index] = Math.floor(
-        Math.random() * Object.keys(TEXTURE_BLOCK_MAP).length
-      );
+  for (let z = 0; z < DEPTH; z++) {
+    for (let x = 0; x < WIDTH; x++) {
+      const noise = ((perlin2([x / 12, z / 12]) + 1) * HEIGHT) / 2;
+      for (let y = 0; y < HEIGHT; y++) {
+        const index = chunkIndex([x, y, z]);
+        if (y < noise - 1) {
+          chunk[index] = blockFromTexture("mud");
+        } else if (y < noise) {
+          chunk[index] = blockFromTexture("moss");
+        } else {
+          chunk[index] = AIR;
+        }
+      }
     }
-    // console.log(chunk[index]);
-  });
+  }
+  // chunkIter(([x, y, z], index) => {
+  //   // if (x === 0) {
+  //   //   chunk[index] = 0;
+  //   // } else if (y === 0) {
+  //   //   chunk[index] = 1;
+  //   // } else if (z === 0) {
+  //   //   chunk[index] = 2;
+  //   // } else {
+  //   //   chunk[index] = AIR;
+  //   // }
+  //   if (Math.random() > 0.5) {
+  //     // if (y > HEIGHT - Math.random() * 2 - 2) {
+  //     chunk[index] = AIR;
+  //   } else {
+  //     chunk[index] = Math.floor(
+  //       Math.random() * Object.keys(TEXTURE_BLOCK_MAP).length
+  //     );
+  //   }
+  //   // console.log(chunk[index]);
+  // });
   chunkIter((position, index) => {
     if (calculateIsExposed(chunk, position)) {
       chunk[index] = chunk[index] | EXPOSED_FILTER;
