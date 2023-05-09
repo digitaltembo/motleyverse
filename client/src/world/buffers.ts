@@ -111,6 +111,7 @@ function initBuffers(gl: GL, cubes: Cube[]): MotleyBuffers {
     positions: initPositionBuffer(gl, cubes),
     textures: initTextureBuffer(gl, cubes),
     normals: initNormalBuffer(gl, cubes.length),
+    textureIndices: null,
     indices,
     vertexCount,
   };

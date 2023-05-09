@@ -3,17 +3,20 @@
 in vec4 aVertexPosition;
 in vec3 aVertexNormal;
 in vec2 aTextureCoord;
+in float aTextureIndex;
 
 uniform mat4 uNormalMatrix;
 uniform mat4 uModelViewMatrix;
 uniform mat4 uProjectionMatrix;
 
+out highp float vTextureIndex;
 out highp vec2 vTextureCoord;
 out highp vec3 vLighting;
 
 void main(void) {
   gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
   vTextureCoord = aTextureCoord;
+  vTextureIndex = aTextureIndex;
 
   // Apply lighting effect
 

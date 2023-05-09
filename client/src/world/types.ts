@@ -1,10 +1,11 @@
 // WebGLRenderingContext is just way too long
-export type GL = WebGLRenderingContext;
+export type GL = WebGL2RenderingContext;
 
 export type MotleyBuffers = {
   positions: WebGLBuffer | null;
   indices: WebGLBuffer | null;
   textures: WebGLBuffer | null;
+  textureIndices: WebGLBuffer | null;
   normals: WebGLBuffer | null;
   vertexCount: number;
 };

@@ -1,3 +1,4 @@
+import { BLOCK_HEIGHT, TEXTURE_SIZE } from "../../gen/textures/mapping";
 import { GL } from "../types";
 
 /**
@@ -10,13 +11,13 @@ import { GL } from "../types";
  */
 export function loadTexture(gl: GL, url: string) {
   const texture = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.bindTexture(gl.TEXTURE_2D_ARRAY, texture);
 
-  // Because images have to be downloaded over the internet
-  // they might take a moment until they are ready.
-  // Until then put a single pixel in the texture so we can
-  // use it immediately. When the image has finished downloading
-  // we'll update the texture with the contents of the image.
+  // // Because images have to be downloaded over the internet
+  // // they might take a moment until they are ready.
+  // // Until then put a single pixel in the texture so we can
+  // // use it immediately. When the image has finished downloading
+  // // we'll update the texture with the contents of the image.
   const level = 0;
   const internalFormat = gl.RGBA;
   const width = 1;
@@ -24,40 +25,46 @@ export function loadTexture(gl: GL, url: string) {
   const border = 0;
   const srcFormat = gl.RGBA;
   const srcType = gl.UNSIGNED_BYTE;
-  const pixel = new Uint8Array([0, 0, 255, 255]); // opaque blue
-  gl.texImage2D(
-    gl.TEXTURE_2D,
-    level,
-    internalFormat,
-    width,
-    height,
-    border,
-    srcFormat,
-    srcType,
+  const pixel = new Uint8Array(
+    Array.from({ length: BLOCK_HEIGHT }).flatMap(() => [0, 0, 255, 255])
+  ); // opaque blue
+  gl.texImage3D(
+    gl.TEXTURE_2D_ARRAY,
+    0,
+    gl.RGBA,
+    1,
+    1,
+    BLOCK_HEIGHT,
+    0,
+    gl.RGBA,
+    gl.UNSIGNED_BYTE,
     pixel
   );
 
   const image = new Image();
 
   image.onload = () => {
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.texImage2D(
-      gl.TEXTURE_2D,
-      level,
-      internalFormat,
-      srcFormat,
-      srcType,
+    gl.bindTexture(gl.TEXTURE_2D_ARRAY, texture);
+    gl.texImage3D(
+      gl.TEXTURE_2D_ARRAY,
+      0,
+      gl.RGBA,
+      TEXTURE_SIZE,
+      TEXTURE_SIZE,
+      BLOCK_HEIGHT,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
       image
     );
 
     gl.texParameteri(
-      gl.TEXTURE_2D,
+      gl.TEXTURE_2D_ARRAY,
       gl.TEXTURE_MIN_FILTER,
-      gl.NEAREST_MIPMAP_NEAREST
+      gl.NEAREST_MIPMAP_LINEAR
     );
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-
-    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.generateMipmap(gl.TEXTURE_2D_ARRAY);
   };
 
   image.src = url;

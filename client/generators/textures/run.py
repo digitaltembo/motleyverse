@@ -100,7 +100,7 @@ def texture_size(image_count):
 
 
 def mega_texture(name, textures):
-    width, height = texture_size(len(textures))
+    width, height = [1, len(textures)]  # texture_size(len(textures))
 
     out = Image.new('RGB', (width * SIZE, height * SIZE))
     for x in range(0, width):
@@ -117,6 +117,9 @@ def texture_mapping(blocks, block_textures, item_textures):
     code = ""
     code += f"export const BLOCK_WIDTH = {width};\n"
     code += f"export const BLOCK_HEIGHT = {height};\n"
+    code += f"export const ATLAS_WIDTH = {width * SIZE};\n"
+    code += f"export const ATLAS_HEIGHT = {height * SIZE};\n"
+    code += f"export const TEXTURE_SIZE = {SIZE};\n"
 
     code += "export const TEXTURE_BLOCK_MAP = {\n"
     for block in blocks:

@@ -81,14 +81,14 @@ function drawScene(
   gl.activeTexture(gl.TEXTURE0);
 
   // Bind the texture to texture unit 0
-  gl.bindTexture(gl.TEXTURE_2D, texture);
+  gl.bindTexture(gl.TEXTURE_2D_ARRAY, texture);
 
   // Tell the shader we bound the texture to texture unit 0
   gl.uniform1i(programInfo.uniLocs.sampler, 0);
 
   {
     const vertexCount = buffers.vertexCount;
-    const type = gl.UNSIGNED_SHORT;
+    const type = gl.UNSIGNED_INT;
     const offset = 0;
     gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
   }
@@ -140,6 +140,17 @@ function setTextureAttribute(
     offset
   );
   gl.enableVertexAttribArray(programInfo.attrLocs.textureCoord);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, buffers.textureIndices);
+  gl.vertexAttribPointer(
+    programInfo.attrLocs.textureIndex,
+    1,
+    gl.FLOAT,
+    false,
+    0,
+    0
+  );
+  gl.enableVertexAttribArray(programInfo.attrLocs.textureIndex);
 }
 
 // Tell WebGL how to pull out the normals from

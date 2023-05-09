@@ -1,8 +1,11 @@
 import {
+  ATLAS_HEIGHT,
+  ATLAS_WIDTH,
   BLOCK_HEIGHT,
   BLOCK_WIDTH,
   Block,
   TEXTURE_BLOCK_MAP,
+  TEXTURE_SIZE,
 } from "../../gen/textures/mapping";
 import { BitwiseBlockData, Chunk, GL, MotleyBuffers, Position } from "../types";
 import { perlin2 } from "./noise";
@@ -13,7 +16,6 @@ export const DEPTH = 50;
 export const HEIGHT = 20;
 export const CHUNK_SIZE = WIDTH * HEIGHT * DEPTH;
 export const CROSS_SECTION_SIZE = WIDTH * HEIGHT;
-
 // Block data is
 // 8 bits block type
 // 1 bit exposed
@@ -90,13 +92,13 @@ export function generateChunk() {
   const chunk = new Uint16Array(CHUNK_SIZE);
   for (let z = 0; z < DEPTH; z++) {
     for (let x = 0; x < WIDTH; x++) {
-      const noise = ((perlin2([x / 12, z / 12]) + 1) * HEIGHT) / 2;
+      const noise = 4; //((perlin2([x / 12, z / 12]) + 1) * HEIGHT) / 2;
       for (let y = 0; y < HEIGHT; y++) {
         const index = chunkIndex([x, y, z]);
         if (y < noise - 1) {
-          chunk[index] = blockFromTexture("mud");
+          chunk[index] = blockFromTexture("wood");
         } else if (y < noise) {
-          chunk[index] = blockFromTexture("moss");
+          chunk[index] = blockFromTexture("grass");
         } else {
           chunk[index] = AIR;
         }
@@ -133,6 +135,7 @@ export function generateChunk() {
 export function chunkArrays(chunk: Chunk) {
   const normals: number[] = [];
   const textures: number[] = [];
+  const textureIndices: number[] = [];
   const positions: number[] = [];
   const indices: number[] = [];
   chunkIter(([x, y, z], index) => {
@@ -162,11 +165,15 @@ export function chunkArrays(chunk: Chunk) {
           );
           const texIndex = texIndices[sideInfo.textureIndex];
 
-          const tx = (texIndex % BLOCK_WIDTH) / BLOCK_WIDTH;
-          const tdx = 1 / BLOCK_WIDTH;
-          const ty = Math.floor(texIndex / BLOCK_WIDTH) / BLOCK_HEIGHT;
-          const tdy = 1 / BLOCK_HEIGHT;
-          textures.push(tx, ty, tx + tdx, ty, tx + tdx, ty + tdy, tx, ty + tdy);
+          const tx = texIndex % BLOCK_WIDTH;
+          const ty = Math.floor(texIndex / BLOCK_WIDTH);
+          const tx0 = (tx * TEXTURE_SIZE) / ATLAS_WIDTH;
+          const tx1 = ((tx + 1) * TEXTURE_SIZE) / ATLAS_WIDTH;
+          const ty0 = (ty * TEXTURE_SIZE) / ATLAS_HEIGHT;
+          const ty1 = ((ty + 1) * TEXTURE_SIZE) / ATLAS_HEIGHT;
+
+          textures.push(0, 0, 1, 0, 1, 1, 0, 1);
+          textureIndices.push(texIndex, texIndex, texIndex, texIndex);
           indices.push(
             basePositionIndex,
             basePositionIndex + 1,
@@ -184,6 +191,7 @@ export function chunkArrays(chunk: Chunk) {
     normals,
     textures,
     indices,
+    textureIndices,
   };
   console.log(bufs);
   return bufs;
@@ -204,16 +212,18 @@ function makeGlBuffer(gl: GL, arr: number[], isElementArray: boolean) {
   gl.bindBuffer(bufType, buf);
   gl.bufferData(
     bufType,
-    isElementArray ? new Uint16Array(arr) : new Float32Array(arr),
+    isElementArray ? new Uint32Array(arr) : new Float32Array(arr),
     gl.STATIC_DRAW
   );
   return buf;
 }
 export function chunkBuffers(gl: GL, chunk: Chunk): MotleyBuffers {
-  const { positions, textures, normals, indices } = chunkArrays(chunk);
+  const { positions, textures, textureIndices, normals, indices } =
+    chunkArrays(chunk);
   return {
     positions: makeGlBuffer(gl, positions, false),
     textures: makeGlBuffer(gl, textures, false),
+    textureIndices: makeGlBuffer(gl, textureIndices, false),
     normals: makeGlBuffer(gl, normals, false),
     indices: makeGlBuffer(gl, indices, true),
     vertexCount: indices.length,
