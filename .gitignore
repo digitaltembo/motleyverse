@@ -4,3 +4,5 @@ client/generators/textures/raw/*
 client/src/gen/*
 client/build
 client/public/textures/*
+*.DS_STORE
+*.png~

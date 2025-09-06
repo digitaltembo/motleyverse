@@ -7,7 +7,13 @@ import { mat4 } from "gl-matrix";
 import initShaders from "./initShaders";
 import { loadBlockTextures } from "./loadTextures";
 import { Block, TEXTURE_BLOCK_MAP } from "../../gen/textures/mapping";
-import { chunkBuffers, generateChunk } from "../chunks/chunk";
+import {
+  chunkBuffers,
+  DEPTH,
+  generateChunk,
+  HEIGHT,
+  WIDTH,
+} from "../chunks/chunk";
 
 const CanvasComponent = styled("canvas")`
   width: 100%;
@@ -49,7 +55,7 @@ type Camera = {
 
 function defaultCamera(): Camera {
   return {
-    position: [-8.257517400730253, -9.499999999999984, -8.132267220205637],
+    position: [-WIDTH / 2, -HEIGHT, -DEPTH / 2],
     perspective: [0, 0],
   };
 }

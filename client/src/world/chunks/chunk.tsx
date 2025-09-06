@@ -11,10 +11,15 @@ import { BitwiseBlockData, Chunk, GL, MotleyBuffers, Position } from "../types";
 import { perlin2 } from "./noise";
 import { SIDES, sideExposed } from "./sides";
 
-export const WIDTH = 50;
-export const DEPTH = 50;
+/** Number of blocks wide a chunk is */
+export const WIDTH = 80;
+/** Number of blocks deep a chunk is (not vertical) */
+export const DEPTH = WIDTH;
+/** Number of blocks high a chunk is (vertical) */
 export const HEIGHT = 20;
+/** Number of voxels in a chunk */
 export const CHUNK_SIZE = WIDTH * HEIGHT * DEPTH;
+/** Number of voxels in a slice of a chunk */
 export const CROSS_SECTION_SIZE = WIDTH * HEIGHT;
 // Block data is
 // 8 bits block type
@@ -92,11 +97,11 @@ export function generateChunk() {
   const chunk = new Uint16Array(CHUNK_SIZE);
   for (let z = 0; z < DEPTH; z++) {
     for (let x = 0; x < WIDTH; x++) {
-      const noise = 4; //((perlin2([x / 12, z / 12]) + 1) * HEIGHT) / 2;
+      const noise = ((perlin2([x / 12, z / 12]) + 1) * HEIGHT) / 2;
       for (let y = 0; y < HEIGHT; y++) {
         const index = chunkIndex([x, y, z]);
         if (y < noise - 1) {
-          chunk[index] = blockFromTexture("wood");
+          chunk[index] = blockFromTexture("dirt");
         } else if (y < noise) {
           chunk[index] = blockFromTexture("grass");
         } else {
