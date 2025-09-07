@@ -1,13 +1,13 @@
 import {
   BLOCK_HEIGHT,
   BLOCK_WIDTH,
-  Block,
+  BlockType,
   TEXTURE_BLOCK_MAP,
 } from "../gen/textures/mapping";
 import { GL, MotleyBuffers } from "./types";
 
 type Cube = {
-  block: Block;
+  block: BlockType;
   x: number;
   y: number;
   z: number;

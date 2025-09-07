@@ -6,12 +6,13 @@ import drawScene from "../scene";
 import { mat4 } from "gl-matrix";
 import initShaders from "./initShaders";
 import { loadBlockTextures } from "./loadTextures";
-import { Block, TEXTURE_BLOCK_MAP } from "../../gen/textures/mapping";
+import { BlockType, TEXTURE_BLOCK_MAP } from "../../gen/textures/mapping";
 import {
   chunkBuffers,
   DEPTH,
   generateChunk,
   HEIGHT,
+  highlightVoxel,
   WIDTH,
 } from "../chunks/chunk";
 
@@ -26,7 +27,7 @@ const cubes = Array.from({ length: dim }).flatMap((_, x) =>
   Array.from({ length: dim }).flatMap((_, y) =>
     Array.from({ length: dim }).map((_, z) => {
       const f = (v: number) => v - dim / 2 + 0.5;
-      const blocks = Object.keys(TEXTURE_BLOCK_MAP) as Block[];
+      const blocks = Object.keys(TEXTURE_BLOCK_MAP) as BlockType[];
 
       const block = blocks[Math.floor(Math.random() * blocks.length)];
       return { block, x: f(x), y: f(y), z: f(z) } as const;
@@ -59,6 +60,11 @@ function defaultCamera(): Camera {
     perspective: [0, 0],
   };
 }
+const chunks = [
+  generateChunk(),
+  generateChunk([WIDTH, 0, 0]),
+  generateChunk([2 * WIDTH, 0, 0]),
+];
 
 function viewFromCamera(camera: Camera) {
   const view = mat4.create();
@@ -77,7 +83,7 @@ function Canvas() {
       return;
     }
 
-    const buffers = chunkBuffers(programInfo.gl, generateChunk());
+    const buffers = chunkBuffers(programInfo.gl, chunks);
     // const buffers = initBuffers(programInfo.gl, cubes);
     console.log(buffers);
     // Load texture
@@ -160,6 +166,12 @@ function Canvas() {
         camera.current.perspective[1] = constrain(
           camera.current.perspective[1] + event.movementY * 0.01,
           PITCH_LIMITS
+        );
+
+        highlightVoxel(
+          chunks[0],
+          camera.current.position,
+          camera.current.perspective
         );
       };
 

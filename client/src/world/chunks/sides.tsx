@@ -89,5 +89,5 @@ export const SIDES: SideInfo[] = Object.values(SIDE_MAP);
 
 export type SideName = keyof typeof SIDE_MAP;
 export function sideExposed(side: SideInfo, chunk: Chunk, index: ChunkIndex) {
-  return (chunk[side.indexOffset(index)] & BLOCK_TYPE_FILTER) === AIR;
+  return (chunk.data[side.indexOffset(index)] & BLOCK_TYPE_FILTER) === AIR;
 }

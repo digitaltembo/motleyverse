@@ -3,10 +3,11 @@ import {
   ATLAS_WIDTH,
   BLOCK_HEIGHT,
   BLOCK_WIDTH,
-  Block,
+  BlockType,
   TEXTURE_BLOCK_MAP,
   TEXTURE_SIZE,
 } from "../../gen/textures/mapping";
+import { raytrace } from "../../utils/raytrace";
 import { BitwiseBlockData, Chunk, GL, MotleyBuffers, Position } from "../types";
 import { perlin2 } from "./noise";
 import { SIDES, sideExposed } from "./sides";
@@ -36,26 +37,43 @@ type UnpackedBlock = {
 };
 
 type ParsedBlock = {
-  block: Block;
+  block: BlockType;
 };
 
-export function createChunk() {
-  return new Uint16Array(CHUNK_SIZE);
+export function createChunk(offset: Position = [0, 0, 0]): Chunk {
+  return {
+    offset,
+    data: new Uint16Array(CHUNK_SIZE),
+  };
 }
 
 export const BLOCK_TYPE_FILTER = 0xff;
 export const EXPOSED_FILTER = 0x1 << 8;
 export const AIR = 0xff;
 
-function blockFromTexture(block: Block) {
-  return Object.keys(TEXTURE_BLOCK_MAP).indexOf(block);
+const TYPE_TO_BLOCK = Object.fromEntries(
+  Object.keys(TEXTURE_BLOCK_MAP).map((blockName, index) => [
+    blockName as BlockType,
+    index,
+  ])
+) as Record<BlockType, BitwiseBlockData>;
+
+const BLOCK_TO_TYPE: Record<BitwiseBlockData, BlockType> = Object.fromEntries(
+  Object.entries(TYPE_TO_BLOCK).map(([type, block]) => [
+    block,
+    type as BlockType,
+  ])
+);
+
+function blockFromTexture(block: BlockType): BitwiseBlockData {
+  return TYPE_TO_BLOCK[block];
 }
 
 function blockType(block: BitwiseBlockData) {
-  return Object.keys(TEXTURE_BLOCK_MAP)[block & BLOCK_TYPE_FILTER] as Block;
+  return BLOCK_TO_TYPE[block & BLOCK_TYPE_FILTER] as BlockType;
 }
 function blockTexture(block: BitwiseBlockData): number[] {
-  return Object.values(TEXTURE_BLOCK_MAP)[block & BLOCK_TYPE_FILTER];
+  return TEXTURE_BLOCK_MAP[blockType(block)];
 }
 function exposed(block: BitwiseBlockData) {
   return Boolean(block & EXPOSED_FILTER);
@@ -64,7 +82,7 @@ function chunkIndex([x, y, z]: Position) {
   return x + y * WIDTH + z * CROSS_SECTION_SIZE;
 }
 
-function calculateIsExposed(chunk: Chunk, [x, y, z]: Position) {
+function calculateIsExposed({ data: chunk }: Chunk, [x, y, z]: Position) {
   if (SIDES.some(({ inChunk }) => !inChunk([x, y, z]))) {
     return true;
   }
@@ -93,19 +111,21 @@ function chunkIter(fn: (position: Position, index: number) => void) {
   }
 }
 
-export function generateChunk() {
-  const chunk = new Uint16Array(CHUNK_SIZE);
-  for (let z = 0; z < DEPTH; z++) {
-    for (let x = 0; x < WIDTH; x++) {
+export function generateChunk(offset: Position = [0, 0, 0]) {
+  const chunk = createChunk(offset);
+  for (let cz = 0; cz < DEPTH; cz++) {
+    for (let cx = 0; cx < WIDTH; cx++) {
+      const x = cx + offset[0];
+      const z = cz + offset[1];
       const noise = ((perlin2([x / 12, z / 12]) + 1) * HEIGHT) / 2;
       for (let y = 0; y < HEIGHT; y++) {
-        const index = chunkIndex([x, y, z]);
+        const index = chunkIndex([cx, y, cz]);
         if (y < noise - 1) {
-          chunk[index] = blockFromTexture("dirt");
+          chunk.data[index] = blockFromTexture("dirt");
         } else if (y < noise) {
-          chunk[index] = blockFromTexture("grass");
+          chunk.data[index] = blockFromTexture("grass");
         } else {
-          chunk[index] = AIR;
+          chunk.data[index] = AIR;
         }
       }
     }
@@ -132,65 +152,67 @@ export function generateChunk() {
   // });
   chunkIter((position, index) => {
     if (calculateIsExposed(chunk, position)) {
-      chunk[index] = chunk[index] | EXPOSED_FILTER;
+      chunk.data[index] = chunk.data[index] | EXPOSED_FILTER;
     }
   });
   return chunk;
 }
-export function chunkArrays(chunk: Chunk) {
+export function chunkArrays(chunks: Chunk[]) {
   const normals: number[] = [];
   const textures: number[] = [];
   const textureIndices: number[] = [];
   const positions: number[] = [];
   const indices: number[] = [];
-  chunkIter(([x, y, z], index) => {
-    const block: BitwiseBlockData = chunk[index];
-    if ((block & BLOCK_TYPE_FILTER) !== AIR && exposed(block)) {
-      const texIndices = blockTexture(block);
-      SIDES.forEach((sideInfo) => {
-        if (
-          !sideInfo.inChunk([x, y, z]) ||
-          sideExposed(sideInfo, chunk, index)
-        ) {
-          const basePositionIndex = positions.length / 3;
-          positions.push(
-            ...sideInfo.vertices.flatMap(([x1, y1, z1]) => [
-              x1 + x,
-              y1 + y,
-              z1 + z,
-            ])
-          );
-          normals.push(
-            ...[
-              sideInfo.norm,
-              sideInfo.norm,
-              sideInfo.norm,
-              sideInfo.norm,
-            ].flat()
-          );
-          const texIndex = texIndices[sideInfo.textureIndex];
+  for (const chunk of chunks) {
+    chunkIter(([x, y, z], index) => {
+      const block: BitwiseBlockData = chunk.data[index];
+      if ((block & BLOCK_TYPE_FILTER) !== AIR && exposed(block)) {
+        const texIndices = blockTexture(block);
+        SIDES.forEach((sideInfo) => {
+          if (
+            !sideInfo.inChunk([x, y, z]) ||
+            sideExposed(sideInfo, chunk, index)
+          ) {
+            const basePositionIndex = positions.length / 3;
+            positions.push(
+              ...sideInfo.vertices.flatMap(([x1, y1, z1]) => [
+                x1 + x + chunk.offset[0],
+                y1 + y + chunk.offset[1],
+                z1 + z + chunk.offset[2],
+              ])
+            );
+            normals.push(
+              ...[
+                sideInfo.norm,
+                sideInfo.norm,
+                sideInfo.norm,
+                sideInfo.norm,
+              ].flat()
+            );
+            const texIndex = texIndices[sideInfo.textureIndex];
 
-          const tx = texIndex % BLOCK_WIDTH;
-          const ty = Math.floor(texIndex / BLOCK_WIDTH);
-          const tx0 = (tx * TEXTURE_SIZE) / ATLAS_WIDTH;
-          const tx1 = ((tx + 1) * TEXTURE_SIZE) / ATLAS_WIDTH;
-          const ty0 = (ty * TEXTURE_SIZE) / ATLAS_HEIGHT;
-          const ty1 = ((ty + 1) * TEXTURE_SIZE) / ATLAS_HEIGHT;
+            const tx = texIndex % BLOCK_WIDTH;
+            const ty = Math.floor(texIndex / BLOCK_WIDTH);
+            const tx0 = (tx * TEXTURE_SIZE) / ATLAS_WIDTH;
+            const tx1 = ((tx + 1) * TEXTURE_SIZE) / ATLAS_WIDTH;
+            const ty0 = (ty * TEXTURE_SIZE) / ATLAS_HEIGHT;
+            const ty1 = ((ty + 1) * TEXTURE_SIZE) / ATLAS_HEIGHT;
 
-          textures.push(0, 0, 1, 0, 1, 1, 0, 1);
-          textureIndices.push(texIndex, texIndex, texIndex, texIndex);
-          indices.push(
-            basePositionIndex,
-            basePositionIndex + 1,
-            basePositionIndex + 2,
-            basePositionIndex,
-            basePositionIndex + 2,
-            basePositionIndex + 3
-          );
-        }
-      });
-    }
-  });
+            textures.push(0, 0, 1, 0, 1, 1, 0, 1);
+            textureIndices.push(texIndex, texIndex, texIndex, texIndex);
+            indices.push(
+              basePositionIndex,
+              basePositionIndex + 1,
+              basePositionIndex + 2,
+              basePositionIndex,
+              basePositionIndex + 2,
+              basePositionIndex + 3
+            );
+          }
+        });
+      }
+    });
+  }
   const bufs = {
     positions,
     normals,
@@ -198,7 +220,6 @@ export function chunkArrays(chunk: Chunk) {
     indices,
     textureIndices,
   };
-  console.log(bufs);
   return bufs;
 }
 
@@ -222,9 +243,41 @@ function makeGlBuffer(gl: GL, arr: number[], isElementArray: boolean) {
   );
   return buf;
 }
-export function chunkBuffers(gl: GL, chunk: Chunk): MotleyBuffers {
+
+export function highlightVoxel(
+  chunk: Chunk,
+  origin: Position,
+  [theta, phi]: [number, number]
+) {
+  const s = Math.sin(theta);
+  const cartesianDirection = [
+    s * Math.cos(phi),
+    s * Math.sin(phi),
+    Math.cos(theta),
+  ];
+  console.log("Drawing with", origin, cartesianDirection);
+  const vs: Position[] = [];
+  raytrace(
+    origin,
+    cartesianDirection,
+    (pos) => {
+      const chunkPos = pos.map(
+        (p, i) => Math.floor(p) + chunk.offset[i]
+      ) as Position;
+      vs.push(pos as Position, chunkPos);
+      if (calculateIsExposed(chunk, chunkPos)) {
+        console.log("Trying to draw", pos, chunkPos);
+        chunk.data[chunkIndex(chunkPos)] = 0;
+        return false;
+      }
+      return true;
+    },
+    100
+  );
+}
+export function chunkBuffers(gl: GL, chunks: Chunk[]): MotleyBuffers {
   const { positions, textures, textureIndices, normals, indices } =
-    chunkArrays(chunk);
+    chunkArrays(chunks);
   return {
     positions: makeGlBuffer(gl, positions, false),
     textures: makeGlBuffer(gl, textures, false),

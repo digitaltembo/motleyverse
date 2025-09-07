@@ -125,7 +125,7 @@ def texture_mapping(blocks, block_textures, item_textures):
     for block in blocks:
         code += f'  "{block.name}": [{block.front},{block.back},{block.top},{block.bottom},{block.right},{block.left}],\n'
     code += "};\n"
-    code += "export type Block = keyof typeof TEXTURE_BLOCK_MAP;"
+    code += "export type BlockType = keyof typeof TEXTURE_BLOCK_MAP;"
 
     with open(CODE_OUT_FILE, 'w') as f:
         f.write(code)
