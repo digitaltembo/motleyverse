@@ -25,7 +25,22 @@ export type Chunk = {
  **/
 export type BitwiseBlockData = number;
 
-export type Position = [number, number, number];
+export type Position = [
+  /** X coordinate */
+  number,
+  /** Y coordinate (up) */
+  number,
+  /** Z coordinate */
+  number
+];
+/** Polar coordinated perspective */
+export type Perspective = [
+  /** phi */
+  number,
+  /** theta */
+  number
+];
+
 export type ChunkIndex = number;
 export type SideInfo = {
   indexOffset: (index: ChunkIndex) => ChunkIndex;
@@ -34,3 +49,5 @@ export type SideInfo = {
   norm: Position;
   textureIndex: number;
 };
+
+export type Camera = {};

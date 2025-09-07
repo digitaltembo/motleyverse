@@ -8,6 +8,7 @@ import {
   TEXTURE_SIZE,
 } from "../../gen/textures/mapping";
 import { raytrace } from "../../utils/raytrace";
+import { Momentum } from "../interaction/Momentum";
 import { BitwiseBlockData, Chunk, GL, MotleyBuffers, Position } from "../types";
 import { perlin2 } from "./noise";
 import { SIDES, sideExposed } from "./sides";
@@ -247,20 +248,10 @@ function makeGlBuffer(gl: GL, arr: number[], isElementArray: boolean) {
   return buf;
 }
 
-export function highlightVoxel(
-  chunk: Chunk,
-  origin: Position,
-  [phi1, theta1]: [number, number]
-) {
-  const theta = theta1 + Math.PI / 2;
-  const phi = phi1 - Math.PI / 2;
-  const s = Math.sin(theta);
-  const cartesianDirection = [
-    s * Math.cos(phi),
-    Math.cos(theta),
-    s * Math.sin(phi),
-  ];
-  console.log("Drawing with", origin, [phi, theta], cartesianDirection);
+export function highlightVoxel(chunk: Chunk, moment: Momentum) {
+  const origin = moment.position;
+
+  const cartesianDirection = moment.cartesianPerspective();
   const vs: Position[] = [];
   raytrace(
     origin,

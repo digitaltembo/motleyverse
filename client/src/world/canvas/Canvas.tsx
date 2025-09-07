@@ -3,19 +3,13 @@ import styled from "styled-components";
 
 import initBuffers from "../buffers";
 import drawScene from "../scene";
-import { mat4 } from "gl-matrix";
 import initShaders from "./initShaders";
 import { loadBlockTextures } from "./loadTextures";
 import { BlockType, TEXTURE_BLOCK_MAP } from "../../gen/textures/mapping";
-import {
-  chunkBuffers,
-  DEPTH,
-  generateChunk,
-  HEIGHT,
-  highlightVoxel,
-  WIDTH,
-} from "../chunks/chunk";
-import { Position } from "../types";
+import { chunkBuffers, generateChunk, WIDTH } from "../chunks/chunk";
+import { keyboardInput } from "../interaction/keyboardInput";
+import { mouseInput } from "../interaction/mouseInput";
+import { Momentum } from "../interaction/Momentum";
 
 const CanvasComponent = styled("canvas")`
   width: 100%;
@@ -36,47 +30,15 @@ const cubes = Array.from({ length: dim }).flatMap((_, x) =>
   )
 );
 
-const PITCH_LIMITS = [-Math.PI / 2, Math.PI / 2] as const;
-function constrain(v: number, [min, max]: Readonly<[number, number]>) {
-  if (v < min) return min;
-  if (v > max) return max;
-  return v;
-}
-
-type Axis = [number, number, number];
-const X_AXIS: Axis = [1, 0, 0];
-const Y_AXIS: Axis = [0, 1, 0];
-const Z_AXIS: Axis = [0, 0, 1];
-
-const DELTA = 1;
-
-type Camera = {
-  position: [number, number, number];
-  perspective: [number, number];
-};
-
-function defaultCamera(): Camera {
-  return {
-    position: [WIDTH / 2, HEIGHT, DEPTH / 2],
-    perspective: [0, 0],
-  };
-}
 const chunks = [
   generateChunk(),
   generateChunk([WIDTH, 0, 0]),
   generateChunk([2 * WIDTH, 0, 0]),
 ];
 
-function viewFromCamera(camera: Camera) {
-  const view = mat4.create();
-  mat4.rotateX(view, view, camera.perspective[1]);
-  mat4.rotateY(view, view, camera.perspective[0]);
-  mat4.translate(view, view, camera.position.map((x) => -x) as Position);
-  return view;
-}
 function Canvas() {
   const [canvas, setCanvas] = React.useState<HTMLCanvasElement | null>(null);
-  const camera = React.useRef(defaultCamera());
+  const moment = React.useRef(new Momentum());
 
   const programInfo = React.useMemo(() => {
     const programInfo = initShaders(canvas);
@@ -86,7 +48,6 @@ function Canvas() {
 
     const buffers = chunkBuffers(programInfo.gl, chunks);
     // const buffers = initBuffers(programInfo.gl, cubes);
-    console.log(buffers);
     // Load texture
     const texture = loadBlockTextures(programInfo.gl);
     if (texture === null) {
@@ -103,11 +64,8 @@ function Canvas() {
       deltaTime = 0.001;
       then = now;
 
-      const buffers = chunkBuffers(programInfo.gl, chunks);
-      drawScene(programInfo, buffers, texture, viewFromCamera(camera.current));
-
-      squareRotation += deltaTime;
-
+      // const buffers = chunkBuffers(programInfo.gl, chunks);
+      drawScene(programInfo, buffers, texture, moment.current.view());
       requestAnimationFrame(render);
     };
     requestAnimationFrame(render);
@@ -116,86 +74,11 @@ function Canvas() {
     return programInfo;
   }, [canvas]);
 
-  React.useEffect(() => {
-    const move = (amount: number, [x1, y1, z1]: Axis) => {
-      const [x, y, z] = camera.current.position;
-      camera.current.position = [
-        x +
-          amount *
-            (x1 * Math.cos(camera.current.perspective[0]) -
-              z1 * Math.sin(camera.current.perspective[0])),
-        y + amount * y1,
-        z +
-          amount *
-            (x1 * Math.sin(camera.current.perspective[0]) +
-              z1 * Math.cos(camera.current.perspective[0])),
-      ];
-    };
-
-    const keyPress = (event: KeyboardEvent) => {
-      switch (event.key) {
-        case "w":
-          move(-DELTA, Z_AXIS);
-          break;
-        case "s":
-          move(DELTA, Z_AXIS);
-          break;
-        case "a":
-          move(-DELTA, X_AXIS);
-          break;
-        case "d":
-          move(DELTA, X_AXIS);
-          break;
-        case "q":
-          move(-DELTA, Y_AXIS);
-          break;
-        case "e":
-          move(DELTA, Y_AXIS);
-          break;
-        case "p":
-          console.log(camera.current);
-      }
-    };
-
-    window.addEventListener("keydown", keyPress);
-    return () => window.removeEventListener("keydown", keyPress);
-  }, []);
+  React.useEffect(() => keyboardInput(moment), []);
 
   React.useEffect(() => {
     if (canvas) {
-      const moveListener = (event: MouseEvent) => {
-        camera.current.perspective[0] += event.movementX * 0.01;
-        camera.current.perspective[1] = constrain(
-          camera.current.perspective[1] + event.movementY * 0.01,
-          PITCH_LIMITS
-        );
-
-        highlightVoxel(
-          chunks[0],
-          camera.current.position,
-          camera.current.perspective
-        );
-      };
-
-      const clickListener = async () => {
-        await canvas.requestPointerLock();
-        canvas.addEventListener("mousemove", moveListener);
-        document.addEventListener(
-          "pointerlockchange",
-          (event) => {
-            if (document.pointerLockElement !== canvas) {
-              canvas.removeEventListener("mousemove", moveListener);
-            }
-          },
-          false
-        );
-      };
-
-      canvas.addEventListener("click", clickListener);
-      return () => {
-        canvas.removeEventListener("click", clickListener);
-        canvas.removeEventListener("mousemove", moveListener);
-      };
+      mouseInput(canvas, moment);
     }
     return () => {};
   }, [canvas]);
