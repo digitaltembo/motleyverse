@@ -56,7 +56,8 @@ def build_block(direntry, block_textures, item_textures):
     if direntry.is_dir():
         b = Block()
         for entry in os.scandir(direntry.path):
-            b = parse_texture(b, entry, block_textures, item_textures)
+            if entry.is_file() and entry.path.endswith('.png'):
+              b = parse_texture(b, entry, block_textures, item_textures)
         return b
     else:
         return monotexture(direntry, block_textures, item_textures)
@@ -67,7 +68,8 @@ def find_blocks():
     block_textures = []
     item_textures = []
     for entry in os.scandir(BLOCK_DIR):
-        blocks.append(build_block(entry, block_textures, item_textures))
+        if entry.is_dir() or entry.path.endswith('.png'):
+          blocks.append(build_block(entry, block_textures, item_textures))
     return blocks, block_textures, item_textures
 
 
@@ -105,8 +107,9 @@ def mega_texture(name, textures):
     out = Image.new('RGB', (width * SIZE, height * SIZE))
     for x in range(0, width):
         for y in range(0, height):
-            out.paste(Image.open(
-                textures[x + y * width]), (x * SIZE, y * SIZE))
+            i = Image.open(textures[x + y * width])
+            i = i.transpose(Image.Transpose.FLIP_TOP_BOTTOM)
+            out.paste(i, (x * SIZE, y * SIZE))
     out.save(PUBLIC_OUT_DIR / (name + '.png'))
     return width, height
 
