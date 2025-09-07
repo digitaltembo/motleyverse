@@ -20,8 +20,7 @@ export function mouseInput(
 
     // highlightVoxel(
     //   chunks[0],
-    //   moment.current.position,
-    //   moment.current.perspective
+    //   moment
     // );
   };
 

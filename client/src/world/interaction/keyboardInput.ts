@@ -7,23 +7,22 @@ const Z_AXIS: Axis = [0, 0, 1];
 const DELTA = 1;
 type Axis = [number, number, number];
 
+const directionKeys = ["w", "a", "s", "d", "q", "e"];
 /**
  * To be called within a useEffect, sets up keypress monitoring events
  * and returns a function for tearing them down
  */
 export function keyboardInput(moment: React.MutableRefObject<Momentum>) {
   const move = (amount: number, [x1, y1, z1]: Axis) => {
-    const [x, y, z] = moment.current.position;
-    moment.current.position = [
-      x +
-        amount *
-          (x1 * Math.cos(moment.current.perspective[0]) -
-            z1 * Math.sin(moment.current.perspective[0])),
-      y + amount * y1,
-      z +
-        amount *
-          (x1 * Math.sin(moment.current.perspective[0]) +
-            z1 * Math.cos(moment.current.perspective[0])),
+    moment.current.velocity = [
+      -amount *
+        (x1 * Math.cos(moment.current.perspective[0]) -
+          z1 * Math.sin(moment.current.perspective[0])),
+      amount * y1,
+
+      -amount *
+        (x1 * Math.sin(moment.current.perspective[0]) +
+          z1 * Math.cos(moment.current.perspective[0])),
     ];
   };
 
@@ -51,7 +50,17 @@ export function keyboardInput(moment: React.MutableRefObject<Momentum>) {
         console.log(moment);
     }
   };
+  const keyRelease = (event: KeyboardEvent) => {
+    if (directionKeys.includes(event.key)) {
+      moment.current.velocity = [0, 0, 0];
+    }
+  };
 
   window.addEventListener("keydown", keyPress);
-  return () => window.removeEventListener("keydown", keyPress);
+  window.addEventListener("keyup", keyRelease);
+  return () => {
+    window.removeEventListener("keydown", keyPress);
+
+    window.addEventListener("keyup", keyRelease);
+  };
 }

@@ -60,13 +60,13 @@ function Canvas() {
     let deltaTime = 0;
     // Draw the scene repeatedly
     const render = (now: number) => {
-      now *= 0.001; // convert to seconds
-      deltaTime = 0.001;
-      then = now;
-
       // const buffers = chunkBuffers(programInfo.gl, chunks);
       drawScene(programInfo, buffers, texture, moment.current.view());
       requestAnimationFrame(render);
+      if (then > 0) {
+        moment.current.update(then - now);
+      }
+      then = now;
     };
     requestAnimationFrame(render);
     // Draw the scene
