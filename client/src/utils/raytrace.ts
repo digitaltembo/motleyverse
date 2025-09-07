@@ -66,6 +66,7 @@ export function raytrace(
     tMax[updatedComponent] += delta[updatedComponent];
 
     shouldContinue = con(voxel, traceInfo);
+    i++;
   }
 }
 

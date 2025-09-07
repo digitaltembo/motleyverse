@@ -15,6 +15,7 @@ import {
   highlightVoxel,
   WIDTH,
 } from "../chunks/chunk";
+import { Position } from "../types";
 
 const CanvasComponent = styled("canvas")`
   width: 100%;
@@ -56,7 +57,7 @@ type Camera = {
 
 function defaultCamera(): Camera {
   return {
-    position: [-WIDTH / 2, -HEIGHT, -DEPTH / 2],
+    position: [WIDTH / 2, HEIGHT, DEPTH / 2],
     perspective: [0, 0],
   };
 }
@@ -70,7 +71,7 @@ function viewFromCamera(camera: Camera) {
   const view = mat4.create();
   mat4.rotateX(view, view, camera.perspective[1]);
   mat4.rotateY(view, view, camera.perspective[0]);
-  mat4.translate(view, view, camera.position);
+  mat4.translate(view, view, camera.position.map((x) => -x) as Position);
   return view;
 }
 function Canvas() {
@@ -102,6 +103,7 @@ function Canvas() {
       deltaTime = 0.001;
       then = now;
 
+      const buffers = chunkBuffers(programInfo.gl, chunks);
       drawScene(programInfo, buffers, texture, viewFromCamera(camera.current));
 
       squareRotation += deltaTime;
@@ -133,16 +135,16 @@ function Canvas() {
     const keyPress = (event: KeyboardEvent) => {
       switch (event.key) {
         case "w":
-          move(DELTA, Z_AXIS);
-          break;
-        case "s":
           move(-DELTA, Z_AXIS);
           break;
+        case "s":
+          move(DELTA, Z_AXIS);
+          break;
         case "a":
-          move(DELTA, X_AXIS);
+          move(-DELTA, X_AXIS);
           break;
         case "d":
-          move(-DELTA, X_AXIS);
+          move(DELTA, X_AXIS);
           break;
         case "q":
           move(-DELTA, Y_AXIS);

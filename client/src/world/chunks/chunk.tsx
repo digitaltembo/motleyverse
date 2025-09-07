@@ -81,6 +81,9 @@ function exposed(block: BitwiseBlockData) {
 function chunkIndex([x, y, z]: Position) {
   return x + y * WIDTH + z * CROSS_SECTION_SIZE;
 }
+function positionInChunk([x, y, z]: Position) {
+  return x >= 0 && y >= 0 && z >= 0 && x < WIDTH && y < HEIGHT && z < DEPTH;
+}
 
 function calculateIsExposed({ data: chunk }: Chunk, [x, y, z]: Position) {
   if (SIDES.some(({ inChunk }) => !inChunk([x, y, z]))) {
@@ -247,15 +250,17 @@ function makeGlBuffer(gl: GL, arr: number[], isElementArray: boolean) {
 export function highlightVoxel(
   chunk: Chunk,
   origin: Position,
-  [theta, phi]: [number, number]
+  [phi1, theta1]: [number, number]
 ) {
+  const theta = theta1 + Math.PI / 2;
+  const phi = phi1 - Math.PI / 2;
   const s = Math.sin(theta);
   const cartesianDirection = [
     s * Math.cos(phi),
-    s * Math.sin(phi),
     Math.cos(theta),
+    s * Math.sin(phi),
   ];
-  console.log("Drawing with", origin, cartesianDirection);
+  console.log("Drawing with", origin, [phi, theta], cartesianDirection);
   const vs: Position[] = [];
   raytrace(
     origin,
@@ -265,9 +270,19 @@ export function highlightVoxel(
         (p, i) => Math.floor(p) + chunk.offset[i]
       ) as Position;
       vs.push(pos as Position, chunkPos);
-      if (calculateIsExposed(chunk, chunkPos)) {
-        console.log("Trying to draw", pos, chunkPos);
-        chunk.data[chunkIndex(chunkPos)] = 0;
+      if (
+        positionInChunk(chunkPos) &&
+        calculateIsExposed(chunk, chunkPos) &&
+        (chunk.data[chunkIndex(chunkPos)] & AIR) !== AIR
+      ) {
+        console.log(
+          "Trying to draw",
+          pos,
+          chunkPos,
+          SIDES.map(({ inChunk }) => !inChunk(chunkPos))
+        );
+        chunk.data[chunkIndex(chunkPos)] =
+          blockFromTexture("sand") | EXPOSED_FILTER;
         return false;
       }
       return true;
