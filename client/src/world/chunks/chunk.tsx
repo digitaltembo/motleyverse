@@ -121,13 +121,16 @@ export function generateChunk(offset: Position = [0, 0, 0]) {
     for (let cx = 0; cx < WIDTH; cx++) {
       const x = cx + offset[0];
       const z = cz + offset[1];
-      const noise = ((perlin2([x / 12, z / 12]) + 1) * HEIGHT) / 2;
+      const heightNoise = ((perlin2([x / 12, z / 12]) + 1) * HEIGHT) / 2;
       for (let y = 0; y < HEIGHT; y++) {
         const index = chunkIndex([cx, y, cz]);
-        if (y < noise - 1) {
+        if (y < heightNoise - 1) {
           chunk.data[index] = blockFromTexture("dirt");
-        } else if (y < noise) {
-          chunk.data[index] = blockFromTexture("grass");
+        } else if (y < heightNoise) {
+          const isLeafPatch = perlin2([x / 7 + 39, z / 7 + 39]) > 0.25;
+          chunk.data[index] = blockFromTexture(
+            isLeafPatch ? "leafyground" : "grass"
+          );
         } else {
           chunk.data[index] = AIR;
         }

@@ -6,3 +6,4 @@ client/build
 client/public/textures/*
 *.DS_STORE
 *.png~
+*.png-autosave.kra
