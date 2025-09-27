@@ -10,7 +10,7 @@ import {
 import { raytrace } from "../../utils/raytrace";
 import { Momentum } from "../interaction/Momentum";
 import { BitwiseBlockData, Chunk, GL, MotleyBuffers, Position } from "../types";
-import { perlin2 } from "./noise";
+import { perlin2 } from "../generators/noise";
 import { SIDES, sideExposed } from "./sides";
 
 /** Number of blocks wide a chunk is */
@@ -197,13 +197,6 @@ export function chunkArrays(chunks: Chunk[]) {
               ].flat()
             );
             const texIndex = texIndices[sideInfo.textureIndex];
-
-            const tx = texIndex % BLOCK_WIDTH;
-            const ty = Math.floor(texIndex / BLOCK_WIDTH);
-            const tx0 = (tx * TEXTURE_SIZE) / ATLAS_WIDTH;
-            const tx1 = ((tx + 1) * TEXTURE_SIZE) / ATLAS_WIDTH;
-            const ty0 = (ty * TEXTURE_SIZE) / ATLAS_HEIGHT;
-            const ty1 = ((ty + 1) * TEXTURE_SIZE) / ATLAS_HEIGHT;
 
             textures.push(0, 0, 1, 0, 1, 1, 0, 1);
             textureIndices.push(texIndex, texIndex, texIndex, texIndex);
