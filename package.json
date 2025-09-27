@@ -1,0 +1,28 @@
+{
+  "name": "motleyverse",
+  "version": "0.0.1",
+  "scripts": {
+    "build": "npm run build -w client",
+    "test": "npm run test --workspaces",
+    "lint": "eslint --fix && prettier --write .",
+    "web": "npm run start --workspace ts/client",
+    "verify": "npm run lint && npm run test && npm run build"
+  },
+  "author": "nolanhhawkins@gmail.com",
+  "license": "MIT",
+  "description": "a game with voxels???",
+  "workspaces": [
+    "ts/client"
+  ],
+  "devDependencies": {
+    "@eslint/js": "^9.32.0",
+    "@types/node": "^24.1.0",
+    "eslint": "^9.32.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.3.0",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.38.0"
+  }
+}
